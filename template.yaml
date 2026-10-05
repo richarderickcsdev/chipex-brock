@@ -71,4 +71,12 @@ Resources:
       UserPoolId: !Ref UserPool
       GenerateSecret: false
       PreventUserExistenceErrors: ENABLED
-      ExplicitAuthFlows: [ALLOW_USER_SRP_AUTH]
+      EnableTokenRevocation: true
+      ExplicitAuthFlows: [ALLOW_USER_SRP_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
+      AccessTokenValidity: 30
+      IdTokenValidity: 30
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
