@@ -80,6 +80,23 @@ def test_medianoche_y_devolucion_dia_original(repo: Repositorio, entrada: Entrad
     assert contador["ttl"] > int(antes.reloj().timestamp())
 
 
+def test_aislamiento_plan_lista_y_cupo(
+    cupo: Cupo, tabla: "Table", entrada: EntradaPlan
+) -> None:
+    cupo.reservar(PLAN_ID, entrada)
+    otro = Repositorio(tabla, "usuario-b")
+    acciones: list[Callable[[], object]] = [
+                   lambda: otro.plan(PLAN_ID), lambda: otro.lista(PLAN_ID),
+                   lambda: otro.marcar_item(PLAN_ID, "it_01", True),
+                   lambda: otro.eliminar_plan(PLAN_ID), lambda: Cupo(otro).devolver(PLAN_ID)]
+    for accion in acciones:
+        with pytest.raises(ErrorBrock) as error:
+            accion()
+        assert error.value.codigo == CodigoError.NO_ENCONTRADO
+    assert Cupo(otro).estado()["usados"] == 0
+    assert otro.historial()["planes"] == []
+
+
 def test_historial_paginacion_y_cursor_ajeno(repo: Repositorio, tabla: "Table") -> None:
     for indice in range(23):
         tabla.put_item(Item={**repo.clave(f"PLAN#{indice:026d}"), "estado": "ERROR"})
