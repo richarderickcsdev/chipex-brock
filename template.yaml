@@ -42,6 +42,7 @@ Resources:
       UsernameAttributes: [email]
       UsernameConfiguration:
         CaseSensitive: false
+      AutoVerifiedAttributes: [email]
       AccountRecoverySetting:
         RecoveryMechanisms:
           - Name: verified_email
@@ -55,6 +56,10 @@ Resources:
           RequireUppercase: true
           RequireNumbers: true
           RequireSymbols: false
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+        EmailSubject: Verifica tu correo en Brock
+        EmailMessage: 'Tu código de verificación de Brock es {####}.'
       UserPoolTags:
         Project: Brock
         Stage: !Ref Stage
