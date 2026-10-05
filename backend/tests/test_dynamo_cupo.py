@@ -80,6 +80,43 @@ def test_medianoche_y_devolucion_dia_original(repo: Repositorio, entrada: Entrad
     assert contador["ttl"] > int(antes.reloj().timestamp())
 
 
+def test_finalizacion_atomica_y_marcas(
+    cupo: Cupo, repo: Repositorio, entrada: EntradaPlan,
+    respuesta_plan: dict[str, Any], metadatos: MetadatosGeneracion,
+) -> None:
+    cupo.reservar(PLAN_ID, entrada)
+    resultado = validar_plan(respuesta_plan, entrada)
+    repo.finalizar(PLAN_ID, resultado, metadatos)
+    assert repo.plan(PLAN_ID)["estado"] == "LISTO"
+    assert repo.plan(PLAN_ID)["tokens_in"] == 100
+    assert repo.lista(PLAN_ID)["items"]["it_01"]["comprado"] is False
+    assert repo.marcar_item(PLAN_ID, "it_01", True)["items"]["it_01"]["comprado"] is True
+    assert repo.marcar_item(PLAN_ID, "it_01", False)["items"]["it_01"]["comprado"] is False
+    with pytest.raises(ErrorBrock):
+        repo.marcar_item(PLAN_ID, "inexistente", True)
+    with pytest.raises(ErrorBrock):
+        cupo.devolver(PLAN_ID)
+    with pytest.raises(ErrorBrock):
+        repo.finalizar(PLAN_ID, resultado, metadatos)
+    repo.eliminar_plan(PLAN_ID)
+    assert repo.obtener(f"PLAN#{PLAN_ID}") is None
+    assert repo.obtener(f"LIST#{PLAN_ID}") is None
+    assert cupo.estado()["usados"] == 1  # Borrar un plan listo no devuelve cupo.
+
+
+def test_no_publicar_tras_devolucion(
+    cupo: Cupo, repo: Repositorio, entrada: EntradaPlan,
+    respuesta_plan: dict[str, Any], metadatos: MetadatosGeneracion,
+) -> None:
+    cupo.reservar(PLAN_ID, entrada)
+    cupo.devolver(PLAN_ID)
+    with pytest.raises(ErrorBrock) as error:
+        repo.finalizar(PLAN_ID, validar_plan(respuesta_plan, entrada), metadatos)
+    assert error.value.codigo == CodigoError.CONFLICTO
+    assert repo.obtener(f"LIST#{PLAN_ID}") is None
+    assert repo.plan(PLAN_ID)["estado"] == "ERROR"
+
+
 def test_aislamiento_plan_lista_y_cupo(
     cupo: Cupo, tabla: "Table", entrada: EntradaPlan
 ) -> None:

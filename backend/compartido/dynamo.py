@@ -162,7 +162,7 @@ class Repositorio:
             for item in resultado.lista_compras
         }}
         # Margen para nombres de atributos y representación interna de DynamoDB.
-        documento = {**guardado, "menu": menu}
+        documento = {**guardado, "menu": menu, **metadatos.model_dump()}
         if len(json_publico(documento).encode()) > 350_000:
             raise ErrorBrock(CodigoError.VALIDACION, "El menú supera el tamaño permitido.")
         try:
@@ -170,10 +170,14 @@ class Repositorio:
                 {"Update": {
                     "TableName": self.tabla.name, "Key": atributos(self.clave(f"PLAN#{plan_id}")),
                     "UpdateExpression": "SET estado = :listo, menu = :m, "
-                                        "actualizado_en = :t",
+                                        "prompt_version = :pv, modelo = :model, "
+                                        "tokens_in = :ti, tokens_out = :to, "
+                                        "latencia_ms = :lat, actualizado_en = :t",
                     "ConditionExpression": "estado = :generando AND cupo_devuelto = :no",
                     "ExpressionAttributeValues": atributos({":listo": "LISTO", ":m": menu,
-                        ":t": ahora_iso(),
+                        ":pv": metadatos.prompt_version, ":model": metadatos.modelo,
+                        ":ti": metadatos.tokens_in, ":to": metadatos.tokens_out,
+                        ":lat": metadatos.latencia_ms, ":t": ahora_iso(),
                         ":generando": "GENERANDO", ":no": False}),
                 }},
                 {"Put": {"TableName": self.tabla.name, "Item": atributos(lista),
