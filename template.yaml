@@ -230,6 +230,10 @@ Resources:
         AllowHeaders: [Authorization, Content-Type]
         AllowMethods: [GET, PUT, POST, PATCH, DELETE, OPTIONS]
         MaxAge: 300
+      DefaultRouteSettings:
+        ThrottlingRateLimit: !FindInMap [StageConfig, !Ref Stage, Rate]
+        ThrottlingBurstLimit: !FindInMap [StageConfig, !Ref Stage, Burst]
+        DetailedMetricsEnabled: true
       Auth:
         DefaultAuthorizer: Cognito
         Authorizers:
