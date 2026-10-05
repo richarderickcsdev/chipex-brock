@@ -5,13 +5,14 @@ import time
 from typing import Any
 
 from .compartidos import CodigoError, ErrorBrock, no_encontrado
+from .historial import RUTAS as RUTAS_HISTORIAL
 from .http import Ruta, Solicitud, identidad, registrar
 from .listas import RUTAS as RUTAS_LISTAS
 from .perfil import RUTAS as RUTAS_PERFIL
 from .planes import RUTAS as RUTAS_PLANES
 from .tareas import procesar
 
-RUTAS: list[Ruta] = [*RUTAS_PERFIL, *RUTAS_PLANES, *RUTAS_LISTAS]
+RUTAS: list[Ruta] = [*RUTAS_PERFIL, *RUTAS_PLANES, *RUTAS_LISTAS, *RUTAS_HISTORIAL]
 
 
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
