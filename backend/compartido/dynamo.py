@@ -60,7 +60,10 @@ class Repositorio:
     def desde_entorno(cls, sub: str) -> "Repositorio":
         import os
 
-        return cls(boto3.resource("dynamodb").Table(os.environ["TABLE_NAME"]), sub)
+        opciones: dict[str, Any] = {}
+        if os.environ.get("AWS_ENDPOINT_URL"):
+            opciones["endpoint_url"] = os.environ["AWS_ENDPOINT_URL"]
+        return cls(boto3.resource("dynamodb", **opciones).Table(os.environ["TABLE_NAME"]), sub)
 
     def clave(self, sk: str) -> dict[str, str]:
         return {"PK": self.pk, "SK": sk}

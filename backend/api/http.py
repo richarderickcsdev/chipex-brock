@@ -4,6 +4,7 @@ import base64
 import binascii
 import hashlib
 import json
+import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -17,6 +18,13 @@ from botocore.config import Config
 from .compartidos import CodigoError, Cupo, ErrorBrock, Repositorio, json_publico
 
 Respuesta = dict[str, Any]
+
+
+class _LambdaLocal:
+    """Acepta la cola local; Bedrock real se prueba en F7/F9."""
+
+    def invoke(self, **_: Any) -> dict[str, int]:
+        return {"StatusCode": 202}
 
 
 def ahora_utc() -> datetime:
@@ -41,6 +49,8 @@ class Solicitud:
 
     @cached_property
     def lambdas(self) -> Any:
+        if os.environ.get("BROCK_LOCAL_MODE") == "true":
+            return _LambdaLocal()
         # No reintentar Invoke automáticamente ante respuestas ambiguas.
         return boto3.client("lambda", config=Config(
             connect_timeout=2, read_timeout=3, retries={"total_max_attempts": 1},

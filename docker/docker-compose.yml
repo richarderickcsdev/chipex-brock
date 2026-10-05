@@ -1,0 +1,29 @@
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
+    ports:
+      - "8000:8000"
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      dynamodb:
+        condition: service_started
+    environment:
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://dynamodb:8000
+      AWS_EC2_METADATA_DISABLED: "true"
+      TABLE_NAME: brock-local
+      CUPO_DIARIO: "5"
+      QUOTA_TIMEZONE: America/Lima
+      FN_GENERADOR: brock-generador-local
+      BROCK_LOCAL_MODE: "true"
+      LOCAL_PORT: "3000"
+      LOCAL_RESET_TABLE: "true"
+    ports:
+      - "3000:3000"

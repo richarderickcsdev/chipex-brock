@@ -52,6 +52,7 @@ su estado pendiente; no se crean commits vacíos para simular su implementación
 - `backend/tests/`: pruebas con pytest y moto.
 - `evaluacion/`: casos y mediciones del modelo (F9).
 - `template.yaml` y `samconfig.toml`: infraestructura (F2).
+- `docker/`: DynamoDB Local y adaptador HTTP para pruebas locales (F4).
 
 ## Preparación local (PowerShell)
 
@@ -200,6 +201,15 @@ eliminación en AWS sigue siendo parte del despliegue, no de la validación loca
 - Completar íconos PNG y validación de instalación PWA en F8.
 
 Nunca guardar credenciales AWS ni tokens en el repositorio.
+
+## Pruebas locales con Docker
+
+El entorno aislado está en `docker/`. Ejecuta `docker compose -f
+docker/docker-compose.yml up --build` con Docker Desktop iniciado. Expone la
+API en `http://localhost:3000` y DynamoDB Local en `localhost:8000`; usa el
+header `X-Local-User-Sub` para cambiar de usuario. No simula Cognito ni Bedrock
+real: la invocación del generador se acepta para probar reserva y estados.
+Consulta [`docker/README.md`](docker/README.md) para ejemplos y limitaciones.
 
 ## API — Fase 4
 
