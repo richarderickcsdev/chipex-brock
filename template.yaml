@@ -320,6 +320,9 @@ Resources:
           BEDROCK_MODEL_ID: !Ref BedrockModelId
           MAX_OUTPUT_TOKENS: '8192'
           POWERTOOLS_SERVICE_NAME: generador
+      EventInvokeConfig:
+        MaximumRetryAttempts: 0
+        MaximumEventAgeInSeconds: 60
 
   FnApi:
     Type: AWS::Serverless::Function
