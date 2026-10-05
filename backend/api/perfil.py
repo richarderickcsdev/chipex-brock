@@ -2,9 +2,11 @@
 
 from .compartidos import Perfil, validar_entrada
 from .http import Respuesta, Ruta, Solicitud, respuesta
+from .recuperacion import recuperar_recientes
 
 
 def publico(solicitud: Solicitud) -> dict[str, object]:
+    recuperar_recientes(solicitud)
     perfil = solicitud.repo.perfil()
     datos = {clave: perfil[clave] for clave in ("personas_defecto", "evitar", "creado_en")
              if clave in perfil}

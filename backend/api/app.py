@@ -8,6 +8,7 @@ from .compartidos import CodigoError, ErrorBrock, no_encontrado
 from .http import Ruta, Solicitud, identidad, registrar
 from .perfil import RUTAS as RUTAS_PERFIL
 from .planes import RUTAS as RUTAS_PLANES
+from .tareas import procesar
 
 RUTAS: list[Ruta] = [*RUTAS_PERFIL, *RUTAS_PLANES]
 
@@ -19,29 +20,34 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                      or getattr(context, "aws_request_id", "local"))
     try:
         if event.get("version") != "2.0":
-            raise ErrorBrock(CodigoError.NO_AUTORIZADO, "Inicia sesión para continuar.")
-        sub, claims = identidad(event)
-        http = event.get("requestContext", {}).get("http", {})
-        metodo = http.get("method")
-        path = event.get("rawPath", http.get("path"))
-        if not isinstance(path, str):
-            raise no_encontrado()
-        stage = event.get("requestContext", {}).get("stage")
-        if isinstance(stage, str) and stage != "$default" and path.startswith(f"/{stage}/"):
-            path = path[len(stage) + 1:]
-        for esperado, patron, nombre, ejecutar in RUTAS:
-            match = re.fullmatch(patron, path)
-            if esperado == metodo and match:
-                ruta = nombre
-                solicitud = Solicitud(event, sub, claims, match.groupdict())
-                resultado = ejecutar(solicitud)
-                break
+            ruta = "INTERNA"
+            resultado = procesar(event)
         else:
-            raise no_encontrado()
+            sub, claims = identidad(event)
+            http = event.get("requestContext", {}).get("http", {})
+            metodo = http.get("method")
+            path = event.get("rawPath", http.get("path"))
+            if not isinstance(path, str):
+                raise no_encontrado()
+            stage = event.get("requestContext", {}).get("stage")
+            if isinstance(stage, str) and stage != "$default" and path.startswith(f"/{stage}/"):
+                path = path[len(stage) + 1:]
+            for esperado, patron, nombre, ejecutar in RUTAS:
+                match = re.fullmatch(patron, path)
+                if esperado == metodo and match:
+                    ruta = nombre
+                    solicitud = Solicitud(event, sub, claims, match.groupdict())
+                    resultado = ejecutar(solicitud)
+                    break
+            else:
+                raise no_encontrado()
     except ErrorBrock as exc:
         resultado = exc.respuesta()
     except Exception as exc:
         tipo_error = type(exc).__name__
+        if event.get("version") != "2.0":
+            registrar(request_id, ruta, sub, 500, inicio, tipo_error)
+            raise
         resultado = ErrorBrock(
             CodigoError.ERROR_INTERNO,
             "No pudimos completar la solicitud. Inténtalo más tarde.",

@@ -8,11 +8,13 @@ from botocore.exceptions import BotoCoreError, ClientError, EndpointConnectionEr
 from .compartidos import CodigoError, EntradaPlan, ErrorBrock, json_publico, validar_entrada
 from .http import Respuesta, Ruta, Solicitud, respuesta
 from .ids import nuevo_ulid
+from .recuperacion import recuperar, recuperar_recientes
 
 
 def crear(solicitud: Solicitud) -> Respuesta:
     solicitud.query(set())
     entrada = validar_entrada(EntradaPlan, solicitud.cuerpo())
+    recuperar_recientes(solicitud)
     preferencias = solicitud.repo.perfil()["evitar"]
     plan_id = nuevo_ulid()
     solicitud.cupo.reservar(plan_id, entrada, preferencias)
@@ -45,7 +47,8 @@ def publico(plan: dict[str, Any]) -> dict[str, Any]:
 
 def obtener(solicitud: Solicitud) -> Respuesta:
     solicitud.query(set())
-    return respuesta(200, publico(solicitud.repo.plan(solicitud.parametros["planId"])))
+    plan = solicitud.repo.plan(solicitud.parametros["planId"])
+    return respuesta(200, publico(recuperar(solicitud, plan)))
 
 
 RUTAS: list[Ruta] = [

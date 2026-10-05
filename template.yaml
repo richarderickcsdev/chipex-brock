@@ -282,6 +282,9 @@ Resources:
               - Effect: Allow
                 Action: bedrock:InvokeModel
                 Resource: !Sub arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:brock-api-${Stage}
 
   ApiRole:
     Type: AWS::IAM::Role
@@ -327,6 +330,10 @@ Resources:
       EventInvokeConfig:
         MaximumRetryAttempts: 0
         MaximumEventAgeInSeconds: 60
+        DestinationConfig:
+          OnFailure:
+            Type: Lambda
+            Destination: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:brock-api-${Stage}
 
   FnApi:
     Type: AWS::Serverless::Function
