@@ -1,0 +1,6 @@
+# Fase 1: reservado para la infraestructura de la Fase 2.
+# Esta plantilla todavía no es desplegable.
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Brock - infraestructura pendiente de la Fase 2
+Resources: {}

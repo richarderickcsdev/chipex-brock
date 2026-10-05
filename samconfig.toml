@@ -1,0 +1,15 @@
+version = 0.1
+
+[dev.deploy.parameters]
+stack_name = "brock-dev"
+resolve_s3 = true
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=dev"
+
+[prod.deploy.parameters]
+stack_name = "brock-prod"
+resolve_s3 = true
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=prod"
