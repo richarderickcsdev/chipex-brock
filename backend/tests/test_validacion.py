@@ -10,7 +10,13 @@ from backend.compartido.esquema import ESQUEMA_PLAN, EntradaPlan, MarcaCompra, P
 from backend.compartido.validacion import json_publico, validar_entrada, validar_plan
 
 
-@pytest.mark.parametrize("datos", [{'personas': 0}, {'personas': 11}, {'personas': True}, {'personas': '2'}, {'personas': 2, 'dias': 8}, {'personas': 2, 'dias': 0}, {'personas': 2, 'comidas': []}, {'personas': 2, 'comidas': ['CENA', 'CENA']}, {'personas': 2, 'comidas': ['MERIENDA']}])
+@pytest.mark.parametrize("datos", [
+    {"personas": 0}, {"personas": 11}, {"personas": True}, {"personas": "2"},
+    {"personas": 2, "dias": 8}, {"personas": 2, "dias": 0},
+    {"personas": 2, "comidas": []}, {"personas": 2, "comidas": ["CENA", "CENA"]},
+    {"personas": 2, "comidas": ["MERIENDA"]}, {"personas": 2, "sub": "otro"},
+    {"personas": 2, "ingredientes_texto": " " * 1001},
+])
 def test_entradas_invalidas(datos: dict[str, Any]) -> None:
     with pytest.raises(ErrorBrock) as error:
         validar_entrada(EntradaPlan, datos)
@@ -122,4 +128,12 @@ def test_duplicados_id_y_nombre(entrada: EntradaPlan, respuesta_plan: dict[str, 
         validar_plan(respuesta_plan, entrada)
     respuesta_plan["lista_compras"][1]["id"] = "it_02"
     with pytest.raises(ErrorBrock, match="agrupar"):
+        validar_plan(respuesta_plan, entrada)
+
+
+def test_controles_en_pasos_anidados(
+    entrada: EntradaPlan, respuesta_plan: dict[str, Any]
+) -> None:
+    respuesta_plan["dias"][0]["comidas"][0]["pasos"] = ["Cocina\x00 con cuidado."]
+    with pytest.raises(ErrorBrock):
         validar_plan(respuesta_plan, entrada)
