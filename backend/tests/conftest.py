@@ -1,6 +1,7 @@
 """Fixtures sin acceso a AWS real."""
 
-from collections.abc import Iterator
+import json
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -69,3 +70,29 @@ def respuesta_plan() -> dict[str, Any]:
         "lista_compras": [{"id": "it_01", "nombre": "Arvejas", "cantidad": 100,
                            "unidad": "g", "pasillo": "DESPENSA"}],
     }
+
+
+@pytest.fixture
+def api(tabla: "Table", monkeypatch: pytest.MonkeyPatch) -> Callable[..., dict[str, Any]]:
+    from backend.api import http
+    from backend.api.app import handler
+
+    monkeypatch.setenv("TABLE_NAME", tabla.name)
+    monkeypatch.setenv("FN_GENERADOR", "brock-generador-test")
+    monkeypatch.setenv("AWS_LAMBDA_FUNCTION_NAME", "brock-api-test")
+    monkeypatch.setenv("CUPO_DIARIO", "5")
+    monkeypatch.setattr(http, "ahora_utc", lambda: datetime(2026, 10, 4, 12, tzinfo=UTC))
+
+    def llamar(metodo: str, path: str, body: object = None, sub: str = "usuario-a",
+               query: dict[str, str] | None = None,
+               claims: dict[str, Any] | None = None) -> dict[str, Any]:
+        evento = {
+            "version": "2.0", "rawPath": path, "queryStringParameters": query,
+            "body": body if isinstance(body, str) else json.dumps(body),
+            "requestContext": {"requestId": "req-test", "stage": "dev",
+                "http": {"method": metodo, "path": path},
+                "authorizer": {"jwt": {"claims": claims or {"sub": sub}}}},
+        }
+        return handler(evento, None)
+
+    return llamar

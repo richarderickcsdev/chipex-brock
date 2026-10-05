@@ -6,8 +6,9 @@ from typing import Any
 
 from .compartidos import CodigoError, ErrorBrock, no_encontrado
 from .http import Ruta, Solicitud, identidad, registrar
+from .perfil import RUTAS as RUTAS_PERFIL
 
-RUTAS: list[Ruta] = []
+RUTAS: list[Ruta] = [*RUTAS_PERFIL]
 
 
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
