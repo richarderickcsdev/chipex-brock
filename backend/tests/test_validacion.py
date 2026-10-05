@@ -10,6 +10,17 @@ from backend.compartido.esquema import ESQUEMA_PLAN, EntradaPlan, MarcaCompra, P
 from backend.compartido.validacion import json_publico, validar_entrada, validar_plan
 
 
+@pytest.mark.parametrize("datos", [
+    {"evitar": ["ajo"] * 21}, {"evitar": ["a" * 41]}, {"evitar": [""]},
+    {"evitar": ["Limón", "limon"]}, {"evitar": ["!!!"]},
+    {"evitar": ["ajo\u200b"]},
+    {"personas_defecto": -1},
+])
+def test_perfil_limites(datos: dict[str, Any]) -> None:
+    with pytest.raises(ErrorBrock):
+        validar_entrada(Perfil, datos)
+
+
 def test_plan_json_valido(entrada: EntradaPlan, respuesta_plan: dict[str, Any]) -> None:
     assert validar_plan(json.dumps(respuesta_plan), entrada).lista_compras[0].cantidad == 100
     assert ESQUEMA_PLAN["additionalProperties"] is False
@@ -42,6 +53,19 @@ def test_dias_y_comidas_exactos(entrada: EntradaPlan, respuesta_plan: dict[str, 
     respuesta_plan["dias"][0]["comidas"] *= 2
     with pytest.raises(ErrorBrock, match="comidas"):
         validar_plan(respuesta_plan, entrada)
+
+
+def test_preferencias_normalizadas_y_palabras(
+    entrada: EntradaPlan, respuesta_plan: dict[str, Any]
+) -> None:
+    with pytest.raises(ErrorBrock, match="evitar"):
+        validar_plan(respuesta_plan, entrada, ["ÁRVEJA"])
+    # "ajo" no coincide con la palabra "trabajo".
+    respuesta_plan["dias"][0]["comidas"][0]["pasos"] = ["Buen trabajo al cocinar."]
+    validar_plan(respuesta_plan, entrada, ["ajo"])
+    respuesta_plan["dias"][0]["comidas"][0]["pasos"] = ["Añade ajo."]
+    with pytest.raises(ErrorBrock, match="evitar"):
+        validar_plan(respuesta_plan, entrada, ["ajo"])
 
 
 def test_cantidades_unidades_agrupadas(
