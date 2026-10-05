@@ -150,6 +150,19 @@ def test_historial_paginacion_y_cursor_ajeno(repo: Repositorio, tabla: "Table") 
             repo.historial(cursor=cursor)
 
 
+def test_eliminar_cuenta_lotes_y_aislamiento(repo: Repositorio, tabla: "Table") -> None:
+    for indice in range(60):
+        tabla.put_item(Item={**repo.clave(f"PLAN#{indice:026d}"), "estado": "ERROR"})
+    otro = Repositorio(tabla, "usuario-b")
+    otro.guardar_perfil(Perfil(personas_defecto=3))
+    repo.guardar_perfil(Perfil())
+    repo.eliminar_datos_usuario()
+    assert repo.historial()["planes"] == []
+    assert repo.obtener("PROFILE") is None
+    assert otro.perfil()["personas_defecto"] == 3
+    repo.eliminar_datos_usuario()  # Reintento sin datos: seguro.
+
+
 def test_no_borrar_generando(cupo: Cupo, repo: Repositorio, entrada: EntradaPlan) -> None:
     cupo.reservar(PLAN_ID, entrada)
     with pytest.raises(ErrorBrock) as error:
@@ -158,6 +171,38 @@ def test_no_borrar_generando(cupo: Cupo, repo: Repositorio, entrada: EntradaPlan
     with pytest.raises(ErrorBrock):
         repo.eliminar_datos_usuario()
     assert repo.plan(PLAN_ID)["estado"] == "GENERANDO"
+
+
+def test_dos_solicitudes_un_solo_cupo(
+    cupo: Cupo, repo: Repositorio, entrada: EntradaPlan, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for indice in range(4):
+        cupo.reservar(f"{indice:026d}", entrada)
+    barrera = Barrier(2, timeout=10)
+    transaccion = Lock()
+    original = repo.cliente.transact_write_items
+
+    def competir(**opciones: Any) -> Any:
+        barrera.wait()
+        # Moto no aísla transacciones entre hilos; el lock modela la atomicidad
+        # de DynamoDB únicamente en el simulador, no en el código productivo.
+        with transaccion:
+            return original(**opciones)
+
+    monkeypatch.setattr(repo.cliente, "transact_write_items", competir)
+
+    def intentar(plan_id: str) -> str:
+        try:
+            cupo.reservar(plan_id, entrada)
+        except ErrorBrock as error:
+            return error.codigo.value
+        return "ACEPTADO"
+
+    with ThreadPoolExecutor(max_workers=2) as ejecutor:
+        resultados = list(ejecutor.map(intentar, [PLAN_ID, "00000000000000000000000005"]))
+    assert sorted(resultados) == ["ACEPTADO", "CUPO_AGOTADO"]
+    assert cupo.estado()["usados"] == 5
+    assert len(repo.historial()["planes"]) == 5
 
 
 def test_dos_devoluciones_concurrentes(

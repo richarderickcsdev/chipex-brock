@@ -137,3 +137,14 @@ def test_controles_en_pasos_anidados(
     respuesta_plan["dias"][0]["comidas"][0]["pasos"] = ["Cocina\x00 con cuidado."]
     with pytest.raises(ErrorBrock):
         validar_plan(respuesta_plan, entrada)
+
+
+def test_json_decimal_y_error_uniforme() -> None:
+    assert json.loads(json_publico({"cantidad": Decimal("0.25"), "usados": Decimal(2)})) == {
+        "cantidad": 0.25, "usados": 2,
+    }
+    error = ErrorBrock(CodigoError.CUPO_AGOTADO, "Sin cupo", reinicia="2026-10-05T05:00:00Z")
+    assert error.respuesta()["statusCode"] == 429
+    assert json.loads(error.respuesta()["body"]) == {"error": {
+        "codigo": "CUPO_AGOTADO", "mensaje": "Sin cupo", "reinicia": "2026-10-05T05:00:00Z",
+    }}
