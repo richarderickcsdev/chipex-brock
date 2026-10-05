@@ -1,6 +1,60 @@
-# Fase 1: reservado para la infraestructura de la Fase 2.
-# Esta plantilla todavía no es desplegable.
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Brock - infraestructura pendiente de la Fase 2
-Resources: {}
+Description: Brock v1 - infraestructura serverless por entorno
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+  BedrockModelId:
+    Type: String
+    MinLength: 1
+    Description: ID de un foundation model regional compatible con Converse
+  CupoDiario:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 100
+  AlertEmail:
+    Type: String
+    AllowedPattern: '^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    Description: Correo de alertas operativas y presupuesto
+  MonthlyBudgetUsd:
+    Type: Number
+    Default: 10
+    MinValue: 1
+
+Mappings:
+  StageConfig:
+    dev:
+      Rate: 5
+      Burst: 10
+    prod:
+      Rate: 20
+      Burst: 40
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub brock-${Stage}
+      UsernameAttributes: [email]
+      UsernameConfiguration:
+        CaseSensitive: false
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 10
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      UserPoolTags:
+        Project: Brock
+        Stage: !Ref Stage
