@@ -51,7 +51,16 @@ def obtener(solicitud: Solicitud) -> Respuesta:
     return respuesta(200, publico(recuperar(solicitud, plan)))
 
 
+def eliminar(solicitud: Solicitud) -> Respuesta:
+    solicitud.query(set())
+    plan_id = solicitud.parametros["planId"]
+    recuperar(solicitud, solicitud.repo.plan(plan_id))
+    solicitud.repo.eliminar_plan(plan_id)
+    return respuesta(204)
+
+
 RUTAS: list[Ruta] = [
     ("POST", r"/planes", "POST /planes", crear),
     ("GET", r"/planes/(?P<planId>[^/]+)", "GET /planes/{planId}", obtener),
+    ("DELETE", r"/planes/(?P<planId>[^/]+)", "DELETE /planes/{planId}", eliminar),
 ]
