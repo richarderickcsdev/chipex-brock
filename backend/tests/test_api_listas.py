@@ -21,3 +21,21 @@ def test_lista_publica_y_aislamiento(
         "unidad": "g", "pasillo": "DESPENSA", "comprado": False}
     assert "PK" not in datos
     assert api("GET", f"/planes/{PLAN_ID}/lista", sub="usuario-b")["statusCode"] == 404
+
+
+def test_marcar_y_desmarcar_persistente(
+    api: Callable[..., dict[str, Any]], cupo: Cupo, repo: Repositorio,
+    entrada: EntradaPlan, respuesta_plan: dict[str, Any], metadatos: MetadatosGeneracion,
+) -> None:
+    cupo.reservar(PLAN_ID, entrada)
+    repo.finalizar(PLAN_ID, validar_plan(respuesta_plan, entrada), metadatos)
+    ruta = f"/planes/{PLAN_ID}/lista/items/it_01"
+    for valor in [True, False]:
+        resultado = api("PATCH", ruta, {"comprado": valor})
+        assert resultado["statusCode"] == 200
+        assert json.loads(resultado["body"])["comprado"] is valor
+        assert json.loads(api("GET", f"/planes/{PLAN_ID}/lista")["body"])["items"][0][
+            "comprado"] is valor
+    assert api("PATCH", ruta, {"comprado": "true"})["statusCode"] == 400
+    assert api("PATCH", ruta, {"comprado": True}, sub="usuario-b")["statusCode"] == 404
+    assert api("PATCH", ruta.replace("it_01", "otro"), {"comprado": True})["statusCode"] == 404
