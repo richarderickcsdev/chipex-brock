@@ -1,6 +1,7 @@
 """Creación asíncrona y presentación pública de los planes."""
 
 import os
+from typing import Any
 
 from botocore.exceptions import BotoCoreError, ClientError, EndpointConnectionError
 
@@ -36,4 +37,18 @@ def crear(solicitud: Solicitud) -> Respuesta:
     return respuesta(202, {"planId": plan_id, "estado": "GENERANDO"})
 
 
-RUTAS: list[Ruta] = [("POST", r"/planes", "POST /planes", crear)]
+def publico(plan: dict[str, Any]) -> dict[str, Any]:
+    campos = {"planId", "estado", "entrada", "menu", "creado_en", "actualizado_en",
+              "error", "prompt_version", "modelo", "tokens_in", "tokens_out", "latencia_ms"}
+    return {clave: valor for clave, valor in plan.items() if clave in campos}
+
+
+def obtener(solicitud: Solicitud) -> Respuesta:
+    solicitud.query(set())
+    return respuesta(200, publico(solicitud.repo.plan(solicitud.parametros["planId"])))
+
+
+RUTAS: list[Ruta] = [
+    ("POST", r"/planes", "POST /planes", crear),
+    ("GET", r"/planes/(?P<planId>[^/]+)", "GET /planes/{planId}", obtener),
+]
