@@ -184,6 +184,23 @@ class Repositorio:
                 raise ErrorBrock(CodigoError.CONFLICTO, "El plan ya terminó.") from exc
             raise
 
+    def eliminar_plan(self, plan_id: str) -> None:
+        self.plan(plan_id)
+        try:
+            self.cliente.transact_write_items(TransactItems=[
+                {"Delete": {"TableName": self.tabla.name,
+                    "Key": atributos(self.clave(f"PLAN#{plan_id}")),
+                    "ConditionExpression": "attribute_exists(PK) AND estado <> :g",
+                    "ExpressionAttributeValues": atributos({":g": "GENERANDO"})}},
+                {"Delete": {"TableName": self.tabla.name,
+                    "Key": atributos(self.clave(f"LIST#{plan_id}"))}},
+            ])
+        except ClientError as exc:
+            if es_condicional(exc):
+                self.plan(plan_id)
+                raise ErrorBrock(CodigoError.CONFLICTO, "Espera a que termine el plan.") from exc
+            raise
+
     def eliminar_datos_usuario(self) -> None:
         """Borra por lotes; el llamador debe impedir nuevas escrituras de la cuenta."""
         claves: list[dict[str, Any]] = []

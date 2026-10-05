@@ -96,6 +96,16 @@ def test_historial_paginacion_y_cursor_ajeno(repo: Repositorio, tabla: "Table") 
             repo.historial(cursor=cursor)
 
 
+def test_no_borrar_generando(cupo: Cupo, repo: Repositorio, entrada: EntradaPlan) -> None:
+    cupo.reservar(PLAN_ID, entrada)
+    with pytest.raises(ErrorBrock) as error:
+        repo.eliminar_plan(PLAN_ID)
+    assert error.value.codigo == CodigoError.CONFLICTO
+    with pytest.raises(ErrorBrock):
+        repo.eliminar_datos_usuario()
+    assert repo.plan(PLAN_ID)["estado"] == "GENERANDO"
+
+
 def test_dos_devoluciones_concurrentes(
     cupo: Cupo, repo: Repositorio, entrada: EntradaPlan, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
