@@ -39,6 +39,12 @@ def test_perfil_limites(datos: dict[str, Any]) -> None:
         validar_entrada(Perfil, datos)
 
 
+@pytest.mark.parametrize("valor", ["true", 1, None])
+def test_marcas_no_convierten_tipos(valor: object) -> None:
+    with pytest.raises(ErrorBrock):
+        validar_entrada(MarcaCompra, {"comprado": valor})
+
+
 def test_plan_json_valido(entrada: EntradaPlan, respuesta_plan: dict[str, Any]) -> None:
     assert validar_plan(json.dumps(respuesta_plan), entrada).lista_compras[0].cantidad == 100
     assert ESQUEMA_PLAN["additionalProperties"] is False

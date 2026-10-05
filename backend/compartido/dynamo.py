@@ -103,6 +103,27 @@ class Repositorio:
             raise no_encontrado()
         return item
 
+    def marcar_item(self, plan_id: str, item_id: str, comprado: bool) -> dict[str, Any]:
+        self.validar_id(plan_id)
+        if type(comprado) is not bool:
+            raise ErrorBrock(CodigoError.VALIDACION, "La marca debe ser verdadero o falso.")
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", item_id):
+            raise no_encontrado()
+        try:
+            resultado = self.tabla.update_item(
+                Key=self.clave(f"LIST#{plan_id}"),
+                UpdateExpression="SET #items.#id.comprado = :v, actualizado_en = :t",
+                ConditionExpression="attribute_exists(#items.#id)",
+                ExpressionAttributeNames={"#items": "items", "#id": item_id},
+                ExpressionAttributeValues={":v": comprado, ":t": ahora_iso()},
+                ReturnValues="ALL_NEW",
+            )
+        except ClientError as exc:
+            if es_condicional(exc):
+                raise no_encontrado() from exc
+            raise
+        return dict(resultado["Attributes"])
+
     def finalizar(
         self, plan_id: str, resultado: PlanGenerado, metadatos: MetadatosGeneracion
     ) -> None:
