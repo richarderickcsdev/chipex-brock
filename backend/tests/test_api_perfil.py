@@ -26,3 +26,13 @@ def test_perfil_rechaza_formulario_invalido(
     api: Callable[..., dict[str, Any]], body: dict[str, Any],
 ) -> None:
     assert api("PUT", "/perfil", body)["statusCode"] == 400
+
+
+def test_preferencias_se_guardan_y_quitan(api: Callable[..., dict[str, Any]]) -> None:
+    resultado = api("PUT", "/perfil", {"personas_defecto": 3, "evitar": ["ajo", "limón"]})
+    assert resultado["statusCode"] == 200
+    assert json.loads(api("GET", "/perfil")["body"])["evitar"] == ["ajo", "limón"]
+    assert api("PUT", "/perfil", {"evitar": ["ajo"] * 21})["statusCode"] == 400
+    assert api("PUT", "/perfil", {"evitar": ["x" * 41]})["statusCode"] == 400
+    api("PUT", "/perfil", {"personas_defecto": 3, "evitar": []})
+    assert json.loads(api("GET", "/perfil")["body"])["evitar"] == []
