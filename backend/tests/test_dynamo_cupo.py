@@ -13,6 +13,7 @@ from botocore.stub import Stubber
 from backend.compartido.dynamo import Repositorio
 from backend.compartido.errores import CodigoError, ErrorBrock
 from backend.compartido.esquema import EntradaPlan, MetadatosGeneracion, Perfil
+from backend.compartido.validacion import validar_plan
 from backend.tests.conftest import PLAN_ID
 
 if TYPE_CHECKING:

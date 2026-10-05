@@ -15,7 +15,7 @@ from botocore.exceptions import ClientError
 
 from .errores import CodigoError, ErrorBrock, no_encontrado
 from .esquema import EntradaPlan, MetadatosGeneracion, Perfil, PlanGenerado
-from .validacion import json_publico
+from .validacion import json_publico, validar_plan
 
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb.service_resource import Table
