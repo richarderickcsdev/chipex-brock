@@ -5,10 +5,8 @@ backend Python 3.12 e infraestructura serverless AWS con SAM.
 
 ## Estado
 
-Fases 1, 2 y 3: base local, infraestructura y módulos compartidos implementados
-y verificados.
-Las rutas de la API y la generación siguen pendientes de F4/F5. Los handlers
-provisionales devuelven 501 (API) o lanzan un error (generador).
+Fases 1, 2, 3 y 4: base local, infraestructura, módulos compartidos y API
+implementados y verificados. La generación real con Bedrock sigue pendiente de F5.
 
 ## Convención de commits
 
@@ -47,7 +45,7 @@ su estado pendiente; no se crean commits vacíos para simular su implementación
 ## Estructura
 
 - `frontend/`: React, Vite, Tailwind, Router, TanStack Query, Auth, formularios y PWA.
-- `backend/api/`: rutas de Lambda (F4).
+- `backend/api/`: rutas HTTP, tareas asíncronas y baja de cuenta (F4 completada).
 - `backend/generador/`: integración Bedrock (F5).
 - `backend/compartido/`: esquema, validación, DynamoDB y cupo (F3 completada).
 - `backend/prompts/`: prompts versionados (F5).
@@ -203,6 +201,37 @@ eliminación en AWS sigue siendo parte del despliegue, no de la validación loca
 
 Nunca guardar credenciales AWS ni tokens en el repositorio.
 
+## API — Fase 4
+
+La Lambda `api` recibe eventos HTTP API v2 y solo acepta el `sub` de
+`requestContext.authorizer.jwt.claims`. No confía en un usuario del body, query
+string, path ni en un header enviado fuera del autorizador. Las respuestas
+privadas no incluyen `PK`, `SK`, `quota_fecha` ni `cupo_devuelto`.
+
+| Ruta | Estado |
+| --- | --- |
+| `GET /perfil` | Implementada; incluye cupo restante |
+| `PUT /perfil` | Implementada; valida personas y preferencias |
+| `POST /planes` | Implementada; reserva y crea `GENERANDO`, invoca generador como evento |
+| `GET /planes` | Implementada; historial descendente con cursor |
+| `GET /planes/{planId}` | Implementada; recupera generaciones vencidas |
+| `DELETE /planes/{planId}` | Implementada; borra plan/lista, no devuelve cupo |
+| `GET /planes/{planId}/lista` | Implementada; ordenada por pasillo |
+| `PATCH /planes/{planId}/lista/items/{itemId}` | Implementada; actualización puntual |
+| `DELETE /cuenta` | Implementada; baja asíncrona y bloqueo de escrituras |
+
+La respuesta a `POST /planes` es 202. Un error confirmado al invocar Lambda
+devuelve el cupo y marca el plan `ERROR`; un timeout ambiguo conserva el plan
+`GENERANDO` para evitar duplicar generaciones. Un plan que supera 60 segundos
+se recupera durante consultas y devuelve su cupo una sola vez.
+
+La eliminación de cuenta escribe `ACCOUNT=BORRANDO` antes de encolar el worker.
+Ese estado bloquea escrituras, el worker deshabilita y elimina Cognito, borra
+la partición DynamoDB y deja `ACCOUNT=BORRADA` con TTL. El evento del worker es
+interno y no se acepta como body HTTP. Si el worker falla, el bloqueo permanece
+y el evento puede reintentarse sin borrar datos parcialmente como si hubiera
+terminado.
+
 ## Verificación de Fase 1 — 04/10/2026
 
 | Comprobación | Resultado |
@@ -232,6 +261,16 @@ en las versiones iniciales. React se mantiene en 18, según la arquitectura.
 | Dependencias de herramientas (`pip check`) | Correctas |
 | SAM CLI / AWS CLI | Ejecutables mediante `.venv-tools` |
 | Despliegue y pruebas en AWS | Pendientes de F7 |
+
+## Verificación de Fase 4 — 04/10/2026
+
+- 100 pruebas pytest aprobadas, incluyendo eventos HTTP API v2, JWT/sub,
+  perfiles, planes, cupos, historiales, listas, marcado y baja Cognito simulada.
+- Ruff, mypy y `pip check` sin errores.
+- `sam validate --lint` y `sam build --config-env dev` correctos.
+- La plantilla incluye destino de fallo asíncrono para compensar generaciones
+  vencidas y configuración de permisos para la Lambda API/worker.
+- No se ha desplegado en AWS; F6 y F7 siguen pendientes.
 
 ## Backend compartido — Fase 3
 

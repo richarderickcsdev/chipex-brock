@@ -65,3 +65,24 @@ la persistencia; la medición real de Bedrock se incorpora en F5/F9.
 - SAM build Linux/ARM64 y validación de plantilla correctos.
 - Frontend compilado y comprobado en F1.
 - Despliegue y comprobaciones en AWS pendientes de F7.
+
+## Etapa 4
+
+| HU o tarea | Contribución |
+| --- | --- |
+| BASE | Router HTTP API v2, identidad JWT, límites de body, logging anonimizado y respuestas sin atributos internos |
+| HU-07 | `DELETE /cuenta`, bloqueo `BORRANDO`, worker interno idempotente, baja Cognito y borrado DynamoDB |
+| HU-08 | `GET /perfil` y `PUT /perfil` |
+| HU-09 | Guardado y validación de preferencias por API |
+| HU-13 | `POST /planes`, ULID e invocación asíncrona del generador |
+| HU-16 | Recuperación de cupo ante fallos confirmados y generaciones vencidas |
+| HU-17 | `GET /planes/{planId}` y estados públicos |
+| HU-20 | `GET /planes/{planId}/lista` ordenada por pasillo |
+| HU-21 | `PATCH /planes/{planId}/lista/items/{itemId}` |
+| HU-24 | `GET /planes` con cursor y resumen público |
+| HU-26 | `DELETE /planes/{planId}` con respuesta 204 |
+| HU-33 | Todas las rutas privadas usan exclusivamente el `sub` del JWT y pruebas de aislamiento |
+
+HU-14, HU-15 y HU-35 tienen soporte compartido y pruebas de validación, pero la
+integración de sus mensajes de generación continúa en F5. HU-01 a HU-06 tienen
+infraestructura Cognito de F2; las pantallas y flujos de frontend continúan en F8.
