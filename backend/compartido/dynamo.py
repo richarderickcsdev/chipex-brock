@@ -70,6 +70,20 @@ class Repositorio:
         item = respuesta.get("Item")
         return dict(item) if item is not None else None
 
+    def perfil(self) -> dict[str, Any]:
+        return self.obtener("PROFILE") or {**self.clave("PROFILE"), **Perfil().model_dump()}
+
+    def guardar_perfil(self, perfil: Perfil) -> dict[str, Any]:
+        respuesta = self.tabla.update_item(
+            Key=self.clave("PROFILE"),
+            UpdateExpression="SET personas_defecto = :p, evitar = :e, "
+                             "creado_en = if_not_exists(creado_en, :t)",
+            ExpressionAttributeValues={":p": perfil.personas_defecto, ":e": perfil.evitar,
+                                       ":t": ahora_iso()},
+            ReturnValues="ALL_NEW",
+        )
+        return dict(respuesta["Attributes"])
+
     def eliminar_datos_usuario(self) -> None:
         """Borra por lotes; el llamador debe impedir nuevas escrituras de la cuenta."""
         claves: list[dict[str, Any]] = []
