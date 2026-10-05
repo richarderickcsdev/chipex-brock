@@ -96,6 +96,47 @@ class Repositorio:
             raise no_encontrado()
         return item
 
+    def lista(self, plan_id: str) -> dict[str, Any]:
+        self.validar_id(plan_id)
+        item = self.obtener(f"LIST#{plan_id}")
+        if item is None:
+            raise no_encontrado()
+        return item
+
+    def finalizar(
+        self, plan_id: str, resultado: PlanGenerado, metadatos: MetadatosGeneracion
+    ) -> None:
+        guardado = self.plan(plan_id)
+        entrada = EntradaPlan.model_validate_json(json_publico(guardado["entrada"]))
+        resultado = validar_plan(resultado.model_dump(mode="json"), entrada, guardado["evitar"])
+        menu = resultado.model_dump(mode="json", exclude={"lista_compras"})
+        lista = {**self.clave(f"LIST#{plan_id}"), "actualizado_en": ahora_iso(), "items": {
+            item.id: {**item.model_dump(mode="json", exclude={"id"}), "comprado": False}
+            for item in resultado.lista_compras
+        }}
+        # Margen para nombres de atributos y representación interna de DynamoDB.
+        documento = {**guardado, "menu": menu}
+        if len(json_publico(documento).encode()) > 350_000:
+            raise ErrorBrock(CodigoError.VALIDACION, "El menú supera el tamaño permitido.")
+        try:
+            self.cliente.transact_write_items(TransactItems=[
+                {"Update": {
+                    "TableName": self.tabla.name, "Key": atributos(self.clave(f"PLAN#{plan_id}")),
+                    "UpdateExpression": "SET estado = :listo, menu = :m, "
+                                        "actualizado_en = :t",
+                    "ConditionExpression": "estado = :generando AND cupo_devuelto = :no",
+                    "ExpressionAttributeValues": atributos({":listo": "LISTO", ":m": menu,
+                        ":t": ahora_iso(),
+                        ":generando": "GENERANDO", ":no": False}),
+                }},
+                {"Put": {"TableName": self.tabla.name, "Item": atributos(lista),
+                         "ConditionExpression": "attribute_not_exists(PK)"}},
+            ])
+        except ClientError as exc:
+            if es_condicional(exc):
+                raise ErrorBrock(CodigoError.CONFLICTO, "El plan ya terminó.") from exc
+            raise
+
     def eliminar_datos_usuario(self) -> None:
         """Borra por lotes; el llamador debe impedir nuevas escrituras de la cuenta."""
         claves: list[dict[str, Any]] = []
