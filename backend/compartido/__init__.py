@@ -1,1 +1,1 @@
-"""Validaciones y acceso a datos; implementación prevista en la Fase 3."""
+"""Contratos, validaciones, acceso a DynamoDB y cupo diario de Brock."""

@@ -1,3 +1,5 @@
-# F2: las entradas provisionales solo usan la biblioteca estándar.
-# F3/F5: agregar aquí dependencias de ejecución al implementar la lógica.
-# SAM empaqueta backend/ para incluir api, generador y compartido.
+# Dependencias Lambda. Mantener compatibles con pyproject.toml.
+boto3==1.43.108
+pydantic==2.13.5
+aws-lambda-powertools==3.35.0
+tzdata==2026.5
