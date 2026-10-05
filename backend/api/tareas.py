@@ -3,10 +3,17 @@
 from typing import Any
 
 from .compartidos import CodigoError, Cupo, ErrorBrock, Repositorio
+from .cuenta import ejecutar as eliminar_cuenta
 from .http import respuesta
 
 
 def procesar(evento: dict[str, Any]) -> dict[str, Any]:
+    if evento.get("version") == "brock-interno-v1" and evento.get("task") == "ELIMINAR_CUENTA":
+        sub = evento.get("sub")
+        if not isinstance(sub, str):
+            raise ErrorBrock(CodigoError.NO_AUTORIZADO, "Evento interno no válido.")
+        eliminar_cuenta(sub)
+        return respuesta(200, {"procesado": True})
     contexto = evento.get("requestContext") or {}
     payload = evento.get("requestPayload")
     if (evento.get("version") == "1.0" and isinstance(payload, dict)

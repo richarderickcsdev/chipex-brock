@@ -20,6 +20,7 @@ dev = [
   "mypy>=1.14,<2",
   "pytest>=8,<9",
   "moto[dynamodb]>=5,<6",
+  "joserfc>=1.0,<2",
   "boto3-stubs[dynamodb,lambda,bedrock-runtime]>=1.35,<2",
   "pip-audit>=2.7,<3",
 ]

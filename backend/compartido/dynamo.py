@@ -6,7 +6,7 @@ import json
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -75,19 +75,41 @@ class Repositorio:
         item = respuesta.get("Item")
         return dict(item) if item is not None else None
 
+    def exigir_activa(self) -> None:
+        cuenta = self.obtener("ACCOUNT")
+        if cuenta and cuenta.get("estado") == "BORRADA":
+            raise ErrorBrock(CodigoError.NO_AUTORIZADO, "La cuenta fue eliminada.")
+        if cuenta and cuenta.get("estado") == "BORRANDO":
+            raise ErrorBrock(CodigoError.CONFLICTO, "La eliminación de tu cuenta está en proceso.")
+
+    def condicion_cuenta(self) -> dict[str, Any]:
+        return {"ConditionCheck": {
+            "TableName": self.tabla.name, "Key": atributos(self.clave("ACCOUNT")),
+            "ConditionExpression": "attribute_not_exists(PK) OR #estado = :activa",
+            "ExpressionAttributeNames": {"#estado": "estado"},
+            "ExpressionAttributeValues": atributos({":activa": "ACTIVA"}),
+        }}
+
     def perfil(self) -> dict[str, Any]:
         return self.obtener("PROFILE") or {**self.clave("PROFILE"), **Perfil().model_dump()}
 
     def guardar_perfil(self, perfil: Perfil) -> dict[str, Any]:
-        respuesta = self.tabla.update_item(
-            Key=self.clave("PROFILE"),
-            UpdateExpression="SET personas_defecto = :p, evitar = :e, "
-                             "creado_en = if_not_exists(creado_en, :t)",
-            ExpressionAttributeValues={":p": perfil.personas_defecto, ":e": perfil.evitar,
-                                       ":t": ahora_iso()},
-            ReturnValues="ALL_NEW",
-        )
-        return dict(respuesta["Attributes"])
+        self.exigir_activa()
+        try:
+            self.cliente.transact_write_items(TransactItems=cast(Any, [
+                {"Update": {"TableName": self.tabla.name,
+                    "Key": atributos(self.clave("PROFILE")),
+                    "UpdateExpression": "SET personas_defecto = :p, evitar = :e, "
+                                        "creado_en = if_not_exists(creado_en, :t)",
+                    "ExpressionAttributeValues": atributos({":p": perfil.personas_defecto,
+                        ":e": perfil.evitar, ":t": ahora_iso()})}},
+                self.condicion_cuenta(),
+            ]))
+        except ClientError as exc:
+            if es_condicional(exc):
+                self.exigir_activa()
+            raise
+        return self.perfil()
 
     def plan(self, plan_id: str) -> dict[str, Any]:
         self.validar_id(plan_id)
@@ -153,6 +175,7 @@ class Repositorio:
     def finalizar(
         self, plan_id: str, resultado: PlanGenerado, metadatos: MetadatosGeneracion
     ) -> None:
+        self.exigir_activa()
         guardado = self.plan(plan_id)
         entrada = EntradaPlan.model_validate_json(json_publico(guardado["entrada"]))
         resultado = validar_plan(resultado.model_dump(mode="json"), entrada, guardado["evitar"])
@@ -166,7 +189,7 @@ class Repositorio:
         if len(json_publico(documento).encode()) > 350_000:
             raise ErrorBrock(CodigoError.VALIDACION, "El menú supera el tamaño permitido.")
         try:
-            self.cliente.transact_write_items(TransactItems=[
+            self.cliente.transact_write_items(TransactItems=cast(Any, [
                 {"Update": {
                     "TableName": self.tabla.name, "Key": atributos(self.clave(f"PLAN#{plan_id}")),
                     "UpdateExpression": "SET estado = :listo, menu = :m, "
@@ -182,9 +205,11 @@ class Repositorio:
                 }},
                 {"Put": {"TableName": self.tabla.name, "Item": atributos(lista),
                          "ConditionExpression": "attribute_not_exists(PK)"}},
-            ])
+                self.condicion_cuenta(),
+            ]))
         except ClientError as exc:
             if es_condicional(exc):
+                self.exigir_activa()
                 raise ErrorBrock(CodigoError.CONFLICTO, "El plan ya terminó.") from exc
             raise
 
@@ -205,7 +230,9 @@ class Repositorio:
                 raise ErrorBrock(CodigoError.CONFLICTO, "Espera a que termine el plan.") from exc
             raise
 
-    def eliminar_datos_usuario(self) -> None:
+    def eliminar_datos_usuario(
+        self, *, permitir_generando: bool = False, conservar_bloqueo: bool = False
+    ) -> None:
         """Borra por lotes; el llamador debe impedir nuevas escrituras de la cuenta."""
         claves: list[dict[str, Any]] = []
         opciones: dict[str, Any] = {
@@ -214,7 +241,9 @@ class Repositorio:
         while True:
             respuesta = self.tabla.query(**opciones)
             for item in respuesta.get("Items", []):
-                if item.get("estado") == "GENERANDO":
+                if conservar_bloqueo and item["SK"] == "ACCOUNT":
+                    continue
+                if not permitir_generando and item.get("estado") == "GENERANDO":
                     raise ErrorBrock(CodigoError.CONFLICTO, "Espera a que terminen tus planes.")
                 claves.append({"PK": item["PK"], "SK": item["SK"]})
             siguiente = respuesta.get("LastEvaluatedKey")

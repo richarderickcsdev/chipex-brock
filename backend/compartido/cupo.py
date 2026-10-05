@@ -3,7 +3,7 @@
 import os
 from collections.abc import Callable
 from datetime import UTC, datetime, time, timedelta
-from typing import Any
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 from botocore.exceptions import ClientError
@@ -46,6 +46,7 @@ class Cupo:
                 "restantes": max(0, self.limite - usados), "reinicia": periodo["reinicia"]}
 
     def reservar(self, plan_id: str, entrada: EntradaPlan, evitar: list[str] | None = None) -> None:
+        self.repo.exigir_activa()
         self.repo.validar_id(plan_id)
         preferencias = Perfil(evitar=evitar or []).evitar
         periodo = self.periodo()
@@ -54,7 +55,7 @@ class Cupo:
                 "creado_en": periodo["ahora"], "quota_fecha": periodo["fecha"],
                 "cupo_devuelto": False}
         try:
-            self.repo.cliente.transact_write_items(TransactItems=[
+            self.repo.cliente.transact_write_items(TransactItems=cast(Any, [
                 {"Update": {
                     "TableName": self.repo.tabla.name,
                     "Key": atributos(self.repo.clave(f"QUOTA#{periodo['fecha']}")),
@@ -67,9 +68,11 @@ class Cupo:
                 }},
                 {"Put": {"TableName": self.repo.tabla.name, "Item": atributos(plan),
                          "ConditionExpression": "attribute_not_exists(PK)"}},
-            ])
+                self.repo.condicion_cuenta(),
+            ]))
         except ClientError as exc:
             if es_condicional(exc):
+                self.repo.exigir_activa()
                 if self.repo.obtener(f"PLAN#{plan_id}") is not None:
                     raise ErrorBrock(
                         CodigoError.CONFLICTO, "Este intento ya está registrado."
