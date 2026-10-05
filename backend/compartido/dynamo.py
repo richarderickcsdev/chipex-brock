@@ -103,6 +103,32 @@ class Repositorio:
             raise no_encontrado()
         return item
 
+    def historial(self, limite: int = 20, cursor: str | None = None) -> dict[str, Any]:
+        if type(limite) is not int or not 1 <= limite <= 20:
+            raise ErrorBrock(CodigoError.VALIDACION, "El límite debe estar entre 1 y 20.")
+        opciones: dict[str, Any] = {
+            "KeyConditionExpression": Key("PK").eq(self.pk) & Key("SK").begins_with("PLAN#"),
+            "ScanIndexForward": False, "Limit": limite, "ConsistentRead": True,
+        }
+        if cursor is not None:
+            try:
+                if len(cursor) > 2048:
+                    raise ValueError
+                clave = json.loads(base64.b64decode(cursor, altchars=b"-_", validate=True))
+                if (not isinstance(clave, dict) or set(clave) != {"PK", "SK"}
+                        or clave["PK"] != self.pk or not isinstance(clave["SK"], str)
+                        or not clave["SK"].startswith("PLAN#")):
+                    raise ValueError
+                self.validar_id(clave["SK"][5:])
+                opciones["ExclusiveStartKey"] = clave
+            except (ValueError, TypeError, binascii.Error, ErrorBrock) as exc:
+                raise ErrorBrock(CodigoError.VALIDACION, "El cursor no es válido.") from exc
+        respuesta = self.tabla.query(**opciones)
+        siguiente = respuesta.get("LastEvaluatedKey")
+        token = (base64.urlsafe_b64encode(json_publico(siguiente).encode()).decode()
+                 if siguiente else None)
+        return {"planes": respuesta.get("Items", []), "cursor": token}
+
     def marcar_item(self, plan_id: str, item_id: str, comprado: bool) -> dict[str, Any]:
         self.validar_id(plan_id)
         if type(comprado) is not bool:

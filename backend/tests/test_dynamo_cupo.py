@@ -80,6 +80,22 @@ def test_medianoche_y_devolucion_dia_original(repo: Repositorio, entrada: Entrad
     assert contador["ttl"] > int(antes.reloj().timestamp())
 
 
+def test_historial_paginacion_y_cursor_ajeno(repo: Repositorio, tabla: "Table") -> None:
+    for indice in range(23):
+        tabla.put_item(Item={**repo.clave(f"PLAN#{indice:026d}"), "estado": "ERROR"})
+    tabla.put_item(Item={**repo.clave("PROFILE"), "personas_defecto": 1})
+    pagina = repo.historial()
+    assert len(pagina["planes"]) == 20
+    assert pagina["planes"][0]["SK"] == f"PLAN#{22:026d}"
+    assert len(repo.historial(cursor=pagina["cursor"])["planes"]) == 3
+    with pytest.raises(ErrorBrock):
+        Repositorio(tabla, "usuario-b").historial(cursor=pagina["cursor"])
+    for cursor in ["!!!", base64.urlsafe_b64encode(json.dumps(
+        {"PK": repo.pk, "SK": "PROFILE"}).encode()).decode()]:
+        with pytest.raises(ErrorBrock):
+            repo.historial(cursor=cursor)
+
+
 def test_dos_devoluciones_concurrentes(
     cupo: Cupo, repo: Repositorio, entrada: EntradaPlan, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
