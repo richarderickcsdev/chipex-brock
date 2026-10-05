@@ -38,6 +38,7 @@ select = ["E", "F", "I", "UP", "B"]
 python_version = "3.12"
 strict = true
 files = ["backend", "evaluacion"]
+exclude = ['^\.venv-tools/']
 
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]

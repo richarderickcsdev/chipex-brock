@@ -1,4 +1,5 @@
 .venv/
+.venv-tools/
 node_modules/
 dist/
 .aws-sam/

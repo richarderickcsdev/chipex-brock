@@ -1,11 +1,23 @@
 version = 0.1
 
+[dev.build.parameters]
+template_file = "template.yaml"
+
+[dev.validate.parameters]
+lint = true
+
 [dev.deploy.parameters]
 stack_name = "brock-dev"
 resolve_s3 = true
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 parameter_overrides = "Stage=dev"
+
+[prod.build.parameters]
+template_file = "template.yaml"
+
+[prod.validate.parameters]
+lint = true
 
 [prod.deploy.parameters]
 stack_name = "brock-prod"
