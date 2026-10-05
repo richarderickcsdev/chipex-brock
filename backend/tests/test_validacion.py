@@ -10,6 +10,16 @@ from backend.compartido.esquema import ESQUEMA_PLAN, EntradaPlan, MarcaCompra, P
 from backend.compartido.validacion import json_publico, validar_entrada, validar_plan
 
 
+def test_texto_limpieza_y_despensa_vacia() -> None:
+    entrada = validar_entrada(EntradaPlan, {"personas": 1,
+        "ingredientes_texto": "  pollo,\n arroz\t\x00 tomate\u200b  "})
+    assert entrada.ingredientes_texto == "pollo, arroz tomate"
+    assert entrada.dias == 7
+    assert entrada.comidas == ["ALMUERZO", "CENA"]
+    assert EntradaPlan(personas=1).ingredientes_texto == ""
+    assert limpiar_texto("huevo\x00pollo") == "huevo pollo"
+
+
 @pytest.mark.parametrize("datos", [
     {"evitar": ["ajo"] * 21}, {"evitar": ["a" * 41]}, {"evitar": [""]},
     {"evitar": ["Limón", "limon"]}, {"evitar": ["!!!"]},
