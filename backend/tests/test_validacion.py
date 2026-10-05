@@ -10,7 +10,7 @@ from backend.compartido.esquema import ESQUEMA_PLAN, EntradaPlan, MarcaCompra, P
 from backend.compartido.validacion import json_publico, validar_entrada, validar_plan
 
 
-@pytest.mark.parametrize("datos", [{'personas': 0}, {'personas': 11}, {'personas': True}, {'personas': '2'}, {'personas': 2, 'dias': 8}, {'personas': 2, 'dias': 0}])
+@pytest.mark.parametrize("datos", [{'personas': 0}, {'personas': 11}, {'personas': True}, {'personas': '2'}, {'personas': 2, 'dias': 8}, {'personas': 2, 'dias': 0}, {'personas': 2, 'comidas': []}, {'personas': 2, 'comidas': ['CENA', 'CENA']}, {'personas': 2, 'comidas': ['MERIENDA']}])
 def test_entradas_invalidas(datos: dict[str, Any]) -> None:
     with pytest.raises(ErrorBrock) as error:
         validar_entrada(EntradaPlan, datos)
