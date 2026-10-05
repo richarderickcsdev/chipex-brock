@@ -8,6 +8,7 @@ import boto3
 import pytest
 from moto import mock_aws
 
+from backend.compartido.cupo import Cupo
 from backend.compartido.dynamo import Repositorio
 from backend.compartido.esquema import EntradaPlan, MetadatosGeneracion
 
@@ -36,6 +37,11 @@ def tabla(monkeypatch: pytest.MonkeyPatch) -> Iterator["Table"]:
 @pytest.fixture
 def repo(tabla: "Table") -> Repositorio:
     return Repositorio(tabla, "usuario-a")
+
+
+@pytest.fixture
+def cupo(repo: Repositorio) -> Cupo:
+    return Cupo(repo, limite=5, reloj=lambda: datetime(2026, 10, 4, 12, tzinfo=UTC))
 
 
 @pytest.fixture

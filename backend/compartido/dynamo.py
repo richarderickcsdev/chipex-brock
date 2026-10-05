@@ -65,6 +65,11 @@ class Repositorio:
     def clave(self, sk: str) -> dict[str, str]:
         return {"PK": self.pk, "SK": sk}
 
+    @staticmethod
+    def validar_id(plan_id: str) -> None:
+        if not re.fullmatch(r"[0-7][0-9A-HJKMNP-TV-Z]{25}", plan_id):
+            raise no_encontrado()
+
     def obtener(self, sk: str) -> dict[str, Any] | None:
         respuesta = self.tabla.get_item(Key=self.clave(sk), ConsistentRead=True)
         item = respuesta.get("Item")
@@ -83,6 +88,13 @@ class Repositorio:
             ReturnValues="ALL_NEW",
         )
         return dict(respuesta["Attributes"])
+
+    def plan(self, plan_id: str) -> dict[str, Any]:
+        self.validar_id(plan_id)
+        item = self.obtener(f"PLAN#{plan_id}")
+        if item is None:
+            raise no_encontrado()
+        return item
 
     def eliminar_datos_usuario(self) -> None:
         """Borra por lotes; el llamador debe impedir nuevas escrituras de la cuenta."""
