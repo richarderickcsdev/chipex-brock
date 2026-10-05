@@ -34,7 +34,51 @@ Mappings:
       Rate: 20
       Burst: 40
 
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    CodeUri: backend/
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref Tabla
+        STAGE: !Ref Stage
+        CUPO_DIARIO: !Ref CupoDiario
+        QUOTA_TIMEZONE: America/Lima
+        POWERTOOLS_METRICS_NAMESPACE: !Sub Brock/${Stage}
+    Tags:
+      Project: Brock
+      Stage: !Ref Stage
+
 Resources:
+  Tabla:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub brock-${Stage}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Project
+          Value: Brock
+        - Key: Stage
+          Value: !Ref Stage
+
   UserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -175,3 +219,128 @@ Resources:
             Condition:
               Bool:
                 aws:SecureTransport: 'false'
+
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Stage
+      CorsConfiguration:
+        AllowOrigins:
+          - !Sub https://${FrontendDistribution.DomainName}
+        AllowHeaders: [Authorization, Content-Type]
+        AllowMethods: [GET, PUT, POST, PATCH, DELETE, OPTIONS]
+        MaxAge: 300
+      Auth:
+        DefaultAuthorizer: Cognito
+        Authorizers:
+          Cognito:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.${AWS::URLSuffix}/${UserPool}
+              audience: [!Ref UserPoolClient]
+      Tags:
+        Project: Brock
+        Stage: !Ref Stage
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/brock-api-${Stage}
+      RetentionInDays: 14
+
+  GeneradorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/brock-generador-${Stage}
+      RetentionInDays: 14
+
+  GeneradorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: generador
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt GeneradorLogGroup.Arn
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:UpdateItem, dynamodb:PutItem, dynamodb:TransactWriteItems]
+                Resource: !GetAtt Tabla.Arn
+              - Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource: !Sub arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}
+
+  ApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: api
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt ApiLogGroup.Arn
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:DeleteItem, dynamodb:Query, dynamodb:BatchWriteItem, dynamodb:TransactWriteItems]
+                Resource: !GetAtt Tabla.Arn
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt FnGenerador.Arn
+
+  FnGenerador:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub brock-generador-${Stage}
+      Handler: generador.app.handler
+      MemorySize: 512
+      Timeout: 60
+      Role: !GetAtt GeneradorRole.Arn
+      LoggingConfig:
+        LogFormat: JSON
+        LogGroup: !Ref GeneradorLogGroup
+      Environment:
+        Variables:
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+          MAX_OUTPUT_TOKENS: '8192'
+          POWERTOOLS_SERVICE_NAME: generador
+
+  FnApi:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub brock-api-${Stage}
+      Handler: api.app.handler
+      MemorySize: 256
+      Timeout: 10
+      Role: !GetAtt ApiRole.Arn
+      LoggingConfig:
+        LogFormat: JSON
+        LogGroup: !Ref ApiLogGroup
+      Environment:
+        Variables:
+          FN_GENERADOR: !Ref FnGenerador
+          POWERTOOLS_SERVICE_NAME: api
+      Events:
+        Proxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /{proxy+}
+            Method: ANY
+            PayloadFormatVersion: '2.0'

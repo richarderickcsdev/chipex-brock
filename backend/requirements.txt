@@ -1,0 +1,3 @@
+# F2: las entradas provisionales solo usan la biblioteca estándar.
+# F3/F5: agregar aquí dependencias de ejecución al implementar la lógica.
+# SAM empaqueta backend/ para incluir api, generador y compartido.
