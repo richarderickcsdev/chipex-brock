@@ -86,6 +86,17 @@ la persistencia; la medición real de Bedrock se incorpora en F5/F9.
 | BASE | Entorno Docker local con DynamoDB Local y adaptador HTTP API v2, sin acceso a AWS |
 | BASE | Configuración segura AWS por perfil, scripts de validación/despliegue y exportación frontend |
 
+## Etapa 5
+
+| HU | Contribución |
+| --- | --- |
+| HU-14 | Bedrock Converse, prompt v1, JSON estricto, validación y reintento único |
+| HU-35 | Prueba explícita de inyección tratada como dato delimitado |
+| HU-37 | Tokens, modelo, versión de prompt, latencia y costo estimado por precios configurados |
+
+La respuesta real depende de un `BEDROCK_MODEL_ID` habilitado en la región. Las
+pruebas de esta etapa simulan Bedrock y no generan gasto AWS.
+
 HU-14, HU-15 y HU-35 tienen soporte compartido y pruebas de validación, pero la
 integración de sus mensajes de generación continúa en F5. HU-01 a HU-06 tienen
 infraestructura Cognito de F2; las pantallas y flujos de frontend continúan en F8.

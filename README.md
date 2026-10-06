@@ -216,6 +216,22 @@ Consulta [`docker/README.md`](docker/README.md) para ejemplos y limitaciones.
 La conexión con AWS se prepara con `config/aws/dev.env` o `prod.env` y los
 scripts de `scripts/`. La guía está en [`config/aws/README.md`](config/aws/README.md).
 
+## Generador IA — Fase 5
+
+`backend/generador/` usa Amazon Bedrock Converse con el modelo indicado por
+`BEDROCK_MODEL_ID`. El sistema carga `backend/prompts/v1/`, delimita los datos
+del usuario como datos no ejecutables y solicita JSON puro. La salida se valida
+contra Pydantic y las reglas de coherencia de F3. Una respuesta inválida recibe
+un único reintento con el error general; dos fallos marcan el plan `ERROR` y
+devuelven el cupo.
+
+En éxito se guarda `LISTO`, menú, lista, `prompt_version`, modelo, tokens y
+latencia. También se emite una métrica CloudWatch EMF con tokens, validez,
+latencia y costo estimado. Los precios por millón de tokens se configuran con
+`BEDROCK_INPUT_PRICE_PER_MILLION` y `BEDROCK_OUTPUT_PRICE_PER_MILLION`; deben
+copiarse de la página vigente del modelo antes de desplegar. El valor `0` solo
+es un marcador para pruebas y no representa un costo real.
+
 ## API — Fase 4
 
 La Lambda `api` recibe eventos HTTP API v2 y solo acepta el `sub` de
@@ -286,6 +302,14 @@ en las versiones iniciales. React se mantiene en 18, según la arquitectura.
 - La plantilla incluye destino de fallo asíncrono para compensar generaciones
   vencidas y configuración de permisos para la Lambda API/worker.
 - No se ha desplegado en AWS; F6 y F7 siguen pendientes.
+
+## Verificación de Fase 5 — 04/10/2026
+
+- 113 pruebas pytest aprobadas, incluyendo Converse simulado, prompt v1,
+  inyección tratada como dato, reintento único, estados y devolución de cupo.
+- Ruff, mypy, `pip check`, `sam validate --lint` y `sam build` correctos.
+- Bedrock no fue invocado en AWS durante esta fase; la selección del modelo,
+  región, habilitación, precios y evaluación real quedan para F0/F9.
 
 ## Backend compartido — Fase 3
 
