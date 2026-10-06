@@ -280,7 +280,7 @@ Resources:
                 Action: [dynamodb:GetItem, dynamodb:UpdateItem, dynamodb:PutItem, dynamodb:TransactWriteItems, dynamodb:ConditionCheckItem]
                 Resource: !GetAtt Tabla.Arn
               - Effect: Allow
-                Action: bedrock:InvokeModel
+                Action: [bedrock:InvokeModel, bedrock:Converse]
                 Resource: !Sub arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}
               - Effect: Allow
                 Action: lambda:InvokeFunction
