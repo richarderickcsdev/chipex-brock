@@ -84,6 +84,7 @@ la persistencia; la medición real de Bedrock se incorpora en F5/F9.
 | HU-33 | Todas las rutas privadas usan exclusivamente el `sub` del JWT y pruebas de aislamiento |
 
 | BASE | Entorno Docker local con DynamoDB Local y adaptador HTTP API v2, sin acceso a AWS |
+| BASE | Configuración segura AWS por perfil, scripts de validación/despliegue y exportación frontend |
 
 HU-14, HU-15 y HU-35 tienen soporte compartido y pruebas de validación, pero la
 integración de sus mensajes de generación continúa en F5. HU-01 a HU-06 tienen

@@ -53,6 +53,8 @@ su estado pendiente; no se crean commits vacíos para simular su implementación
 - `evaluacion/`: casos y mediciones del modelo (F9).
 - `template.yaml` y `samconfig.toml`: infraestructura (F2).
 - `docker/`: DynamoDB Local y adaptador HTTP para pruebas locales (F4).
+- `config/aws/`: parámetros AWS por entorno, sin credenciales.
+- `scripts/`: validación de perfil, despliegue, exportación frontend y eliminación.
 
 ## Preparación local (PowerShell)
 
@@ -210,6 +212,9 @@ API en `http://localhost:3000` y DynamoDB Local en `localhost:8000`; usa el
 header `X-Local-User-Sub` para cambiar de usuario. No simula Cognito ni Bedrock
 real: la invocación del generador se acepta para probar reserva y estados.
 Consulta [`docker/README.md`](docker/README.md) para ejemplos y limitaciones.
+
+La conexión con AWS se prepara con `config/aws/dev.env` o `prod.env` y los
+scripts de `scripts/`. La guía está en [`config/aws/README.md`](config/aws/README.md).
 
 ## API — Fase 4
 
