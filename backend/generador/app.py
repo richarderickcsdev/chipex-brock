@@ -15,6 +15,7 @@ if __package__ == "backend.generador":
     from ..compartido.esquema import EntradaPlan, MetadatosGeneracion
     from ..compartido.validacion import json_publico, validar_plan
     from .bedrock import generar
+    from .costo import costo_estimado
     from .prompt import PROMPT_VERSION, mensajes
 else:
     from compartido.cupo import Cupo  # type: ignore[import-not-found]
@@ -29,6 +30,7 @@ else:
         validar_plan,
     )
     from generador.bedrock import generar  # type: ignore[import-not-found]
+    from generador.costo import costo_estimado  # type: ignore[import-not-found]
     from generador.prompt import PROMPT_VERSION, mensajes  # type: ignore[import-not-found]
 
 
@@ -48,6 +50,9 @@ def log_metricas(plan_id: str, modelo: str, valido: bool, tokens_in: int,
         "Model": modelo, "TokensIn": tokens_in, "TokensOut": tokens_out,
         "GeneracionValida": 1 if valido else 0, "LatenciaGeneracion": latencia_ms,
     }
+    precio_in = os.environ.get("BEDROCK_INPUT_PRICE_PER_MILLION", "0")
+    precio_out = os.environ.get("BEDROCK_OUTPUT_PRICE_PER_MILLION", "0")
+    evento["CostoEstimadoUsd"] = str(costo_estimado(tokens_in, tokens_out, precio_in, precio_out))
     print(json.dumps(evento, ensure_ascii=False))
 
 
