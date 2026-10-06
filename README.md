@@ -311,6 +311,17 @@ en las versiones iniciales. React se mantiene en 18, según la arquitectura.
 - Bedrock no fue invocado en AWS durante esta fase; la selección del modelo,
   región, habilitación, precios y evaluación real quedan para F0/F9.
 
+## Verificación de Fase 6 — 04/10/2026
+
+- **117 pruebas pytest aprobadas**.
+- Flujo integrado probado: perfil → creación asíncrona → generador simulado →
+  plan `LISTO` → lista → marcado → historial → eliminación.
+- Aislamiento probado para lectura, modificación y borrado entre usuarios.
+- Cupo probado bajo concurrencia y con devolución idempotente.
+- Ráfaga local de 30 lecturas concurrentes sin respuestas corruptas ni claves
+  internas. API Gateway throttling queda pendiente de prueba en AWS.
+- No se usaron credenciales, Cognito real ni Bedrock real.
+
 ## Backend compartido — Fase 3
 
 | Módulo | Responsabilidad |

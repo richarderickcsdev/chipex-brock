@@ -97,6 +97,17 @@ la persistencia; la medición real de Bedrock se incorpora en F5/F9.
 La respuesta real depende de un `BEDROCK_MODEL_ID` habilitado en la región. Las
 pruebas de esta etapa simulan Bedrock y no generan gasto AWS.
 
+## Etapa 6
+
+| Tarea | Contribución |
+| --- | --- |
+| QA | Flujo integrado API, DynamoDB simulada, generador simulado, lista, historial y eliminación |
+| HU-16 / HU-33 | Verificación de cupo concurrente y aislamiento de lecturas/modificaciones/borrados |
+| HU-34 | Ráfaga local de 30 lecturas; throttling real queda para API Gateway desplegado |
+| HU-35 | Flujo integrado con entradas y eventos internos no expuestos por HTTP |
+
+El gate local de F6 queda aprobado con 117 pruebas, Ruff, mypy y SAM build.
+
 HU-14, HU-15 y HU-35 tienen soporte compartido y pruebas de validación, pero la
 integración de sus mensajes de generación continúa en F5. HU-01 a HU-06 tienen
 infraestructura Cognito de F2; las pantallas y flujos de frontend continúan en F8.
