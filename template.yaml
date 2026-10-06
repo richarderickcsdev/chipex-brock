@@ -24,6 +24,14 @@ Parameters:
     Type: Number
     Default: 10
     MinValue: 1
+  BedrockInputPricePerMillion:
+    Type: String
+    Default: '0'
+    AllowedPattern: '^[0-9]+(\.[0-9]+)?$'
+  BedrockOutputPricePerMillion:
+    Type: String
+    Default: '0'
+    AllowedPattern: '^[0-9]+(\.[0-9]+)?$'
 
 Mappings:
   StageConfig:
@@ -332,6 +340,8 @@ Resources:
         Variables:
           BEDROCK_MODEL_ID: !Ref BedrockModelId
           MAX_OUTPUT_TOKENS: '8192'
+          BEDROCK_INPUT_PRICE_PER_MILLION: !Ref BedrockInputPricePerMillion
+          BEDROCK_OUTPUT_PRICE_PER_MILLION: !Ref BedrockOutputPricePerMillion
           POWERTOOLS_SERVICE_NAME: generador
       EventInvokeConfig:
         MaximumRetryAttempts: 0

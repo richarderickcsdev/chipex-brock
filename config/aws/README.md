@@ -56,6 +56,8 @@ Lambdas, DynamoDB, S3, CloudFront, alarmas, SNS y Budget definidos en
 | `ALERT_EMAIL` | SNS y AWS Budgets |
 | `CUPO_DIARIO` | Planes máximos por usuario/día |
 | `MONTHLY_BUDGET_USD` | Límite mensual del Budget |
+| `BEDROCK_INPUT_PRICE_PER_MILLION` | Precio vigente de entrada, USD por millón de tokens |
+| `BEDROCK_OUTPUT_PRICE_PER_MILLION` | Precio vigente de salida, USD por millón de tokens |
 
 Los scripts exportan los outputs de CloudFormation a `frontend/.env.local`.
 Ese archivo está ignorado y solo contiene IDs/URLs públicas de configuración,
