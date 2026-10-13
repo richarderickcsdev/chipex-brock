@@ -27,8 +27,10 @@ aws sso login --profile brock-dev
 Copy-Item config/aws/dev.env.example config/aws/dev.env
 ```
 
-Completa al menos `AWS_PROFILE`, `AWS_REGION`, `BEDROCK_MODEL_ID` y `ALERT_EMAIL`.
-El modelo debe estar disponible y habilitado en la región elegida.
+Completa `AWS_PROFILE`, `AWS_REGION`, `BEDROCK_MODEL_ID`, `ALERT_EMAIL` y los
+precios actuales de Bedrock por millón de tokens. El modelo debe estar
+disponible y habilitado en la región elegida; no uses `0` para ocultar un precio
+desconocido, porque el costo medido sería incorrecto.
 
 ## Comandos
 
@@ -43,7 +45,10 @@ Desde la raíz:
 
 El despliegue pide confirmación a SAM y crea la pila, Cognito, API Gateway,
 Lambdas, DynamoDB, S3, CloudFront, alarmas, SNS y Budget definidos en
-`template.yaml`. La confirmación de la suscripción SNS llega al correo indicado.
+`template.yaml`. Por defecto reutiliza el presupuesto de cuenta existente y no
+crea otro Budget dentro del stack; puede habilitarse con `CreateStackBudget=true`
+si se desea un presupuesto adicional por entorno. La confirmación de la
+suscripción SNS llega al correo indicado.
 
 ## Valores disponibles
 
