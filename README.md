@@ -322,6 +322,35 @@ en las versiones iniciales. React se mantiene en 18, según la arquitectura.
   internas. API Gateway throttling queda pendiente de prueba en AWS.
 - No se usaron credenciales, Cognito real ni Bedrock real.
 
+## Despliegue `dev` en AWS — Fase 7
+
+La pila `brock-dev` se desplegó en `us-east-1` y está `CREATE_COMPLETE`.
+
+| Output | Valor |
+| --- | --- |
+| API | `https://ypdvyu4ev7.execute-api.us-east-1.amazonaws.com/dev` |
+| PWA | `https://d1z78xb68rmhq3.cloudfront.net` |
+| Cognito User Pool | `us-east-1_Y24UyAiKr` |
+| Cognito App Client | `16ve22c8lo414dl4ktb80qe11h` |
+| DynamoDB | `brock-dev` |
+| CloudFront Distribution | `EGDI9BGWT3SF4` |
+
+La API real devuelve 401 sin JWT en todos los endpoints privados. El autorizador
+JWT usa el User Pool y Client anteriores. La PWA se publicó en S3 y CloudFront
+sirve el HTML/manifest con HTTP 200. El contenido frontend es aún el scaffold;
+las pantallas y flujos de Cognito se desarrollan en F8.
+
+Bedrock quedó configurado con Claude Haiku 4.5. No se realizó todavía una
+generación autenticada. La suscripción SNS está desplegada pero pendiente de
+confirmación: hay que aceptar el correo de SNS para activar las alarmas.
+Se reutiliza el Budget account-level de 10 USD; la pila no crea un segundo.
+El bucket administrado de artefactos SAM queda fuera de la pila y debe revisarse
+al borrar el entorno.
+
+Las tarifas de costo estimado configuradas son USD 1/M tokens de entrada y
+USD 5/M de salida, según la tarifa pública consultada para Haiku 4.5. La factura
+efectiva de Bedrock es la fuente definitiva y puede depender de la modalidad y región.
+
 ## Backend compartido — Fase 3
 
 | Módulo | Responsabilidad |

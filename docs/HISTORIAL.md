@@ -108,6 +108,23 @@ pruebas de esta etapa simulan Bedrock y no generan gasto AWS.
 
 El gate local de F6 queda aprobado con 117 pruebas, Ruff, mypy y SAM build.
 
+## Etapa 7
+
+| Tarea | Resultado |
+| --- | --- |
+| AWS `dev` | `brock-dev` está `CREATE_COMPLETE` en `us-east-1` |
+| API Gateway/JWT | Proxy desplegado; endpoints privados devuelven 401 sin JWT |
+| Backend/AWS | Lambda API, generador y DynamoDB creados |
+| Cognito | User Pool y app client creados; autenticación SRP |
+| PWA | Assets en S3 privado; CloudFront HTML/manifest HTTP 200 |
+| Bedrock | Haiku 4.5 activo, autorizado y configurado; falta generación autenticada |
+| SNS | Tópico creado; suscripción de correo pendiente de confirmación manual |
+| Budget | Se reutiliza presupuesto de cuenta de USD 10; sin presupuesto duplicado |
+
+Pendiente: probar registro/autenticación y operaciones API con JWT de usuario,
+confirmar SNS y realizar una generación real Bedrock después de F8. El frontend
+actual es el scaffold de F1, no el producto completo.
+
 HU-14, HU-15 y HU-35 tienen soporte compartido y pruebas de validación, pero la
 integración de sus mensajes de generación continúa en F5. HU-01 a HU-06 tienen
 infraestructura Cognito de F2; las pantallas y flujos de frontend continúan en F8.
