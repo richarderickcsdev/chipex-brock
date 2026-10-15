@@ -26,6 +26,17 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             ruta = "INTERNA"
             resultado = procesar(event)
         else:
+            http = event.get("requestContext", {}).get("http", {})
+            metodo = http.get("method")
+            if metodo == "OPTIONS":
+                return {"statusCode": 204, "headers": {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Cache-Control": "no-store",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "GET,PUT,POST,PATCH,DELETE,OPTIONS",
+                    "Access-Control-Allow-Headers": "Authorization,Content-Type",
+                    "Access-Control-Max-Age": "300",
+                }, "body": ""}
             sub, claims = identidad(event)
             http = event.get("requestContext", {}).get("http", {})
             metodo = http.get("method")
@@ -58,5 +69,8 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             "No pudimos completar la solicitud. Inténtalo más tarde.",
         ).respuesta()
     resultado["headers"]["Cache-Control"] = "no-store"
+    resultado["headers"].setdefault("Access-Control-Allow-Origin", "*")
+    resultado["headers"].setdefault("Access-Control-Allow-Headers", "Authorization,Content-Type")
+    resultado["headers"].setdefault("Access-Control-Allow-Methods", "GET,PUT,POST,PATCH,DELETE,OPTIONS")
     registrar(request_id, ruta, sub, resultado["statusCode"], inicio, tipo_error)
     return resultado

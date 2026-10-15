@@ -112,6 +112,9 @@ def identidad(evento: dict[str, Any]) -> tuple[str, dict[str, Any]]:
 def respuesta(estado: int, datos: object = None) -> Respuesta:
     return {"statusCode": estado, "headers": {
         "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Authorization,Content-Type",
+        "Access-Control-Allow-Methods": "GET,PUT,POST,PATCH,DELETE,OPTIONS",
     }, "body": "" if estado == 204 else json_publico(datos)}
 
 

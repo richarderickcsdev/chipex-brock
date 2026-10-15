@@ -21,8 +21,14 @@ def texto_converse(respuesta: dict[str, Any]) -> str:
         texto = "".join(textos).strip()
     except (KeyError, TypeError, IndexError) as exc:
         raise ValueError("Respuesta Bedrock sin texto.") from exc
-    if not texto or texto.startswith("```") or not texto.startswith("{"):
+    if not texto:
+        raise ValueError("Bedrock no devolvió texto.")
+    # Extraer JSON aunque venga con texto explicativo o bloques Markdown.
+    inicio = texto.find("{")
+    fin = texto.rfind("}")
+    if inicio == -1 or fin <= inicio:
         raise ValueError("Bedrock no devolvió JSON puro.")
+    texto = texto[inicio:fin + 1]
     try:
         objeto = json.loads(texto)
     except json.JSONDecodeError as exc:

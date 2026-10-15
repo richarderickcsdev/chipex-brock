@@ -49,12 +49,21 @@ def test_prompt_injection_no_cambia_reglas_del_sistema() -> None:
     assert "AWS_ACCESS_KEY" not in sistema
 
 
-def test_texto_converse_rechaza_markdown_y_formato_invalido() -> None:
-    with pytest.raises(ValueError):
-        texto_converse({"output": {"message": {"content": [{"text": "```json\n{}\n```"}]}}})
+def test_texto_converse_rechaza_formato_invalido() -> None:
     with pytest.raises(ValueError):
         texto_converse({"output": {"message": {"content": [{"text": "[]"}]}}})
+    with pytest.raises(ValueError):
+        texto_converse({"output": {"message": {"content": [{"text": "no hay json"}]}}})
     assert texto_converse({"output": {"message": {"content": [{"text": "{}"}]}}}) == "{}"
+
+
+def test_texto_converse_extrae_json_de_respuesta_con_texto() -> None:
+    assert texto_converse({"output": {"message": {"content": [
+        {"text": "Aquí tienes el plan:\n```json\n{\"ok\":true}\n```\nEspero que sirva."},
+    ]}}}) == '{"ok":true}'
+    assert texto_converse({"output": {"message": {"content": [
+        {"text": "Resultado: {\"dia\":1} fin"},
+    ]}}}) == '{"dia":1}'
 
 
 def test_llamada_converse_configura_modelo_tokens_y_temperatura(
