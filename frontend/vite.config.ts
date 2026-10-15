@@ -37,8 +37,8 @@ export default defineConfig(({ mode, command }) => {
           lang: 'es',
           start_url: '/',
           display: 'standalone',
-          theme_color: '#166534',
-          background_color: '#f0fdf4',
+          theme_color: '#10b981',
+          background_color: '#f8fafc',
           icons: [
             {
               src: '/brock-192.png',
