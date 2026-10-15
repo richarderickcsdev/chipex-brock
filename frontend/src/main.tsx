@@ -1,20 +1,28 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { Inicio } from './paginas/Inicio';
+import { BrowserRouter } from 'react-router-dom';
+import { App } from './App';
+import { Sesion } from './auth/Sesion';
+import { configurarAWS } from './config';
 import './styles.css';
 
-const queryClient = new QueryClient();
+configurarAWS();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: false, refetchOnWindowFocus: false },
+    mutations: { retry: false },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="*" element={<Inicio />} />
-        </Routes>
-      </BrowserRouter>
+      <Sesion>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </Sesion>
     </QueryClientProvider>
   </React.StrictMode>,
 );
