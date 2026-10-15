@@ -167,6 +167,21 @@ costo $0.015/plan. La lista de compras se recalcula a partir de los ingredientes
 `en_casa=false`, garantizando coherencia exacta. Pendiente: optimizar latencia
 para casos complejos (7 días, 10 personas) y verificar en producción.
 
+## Etapa 10 — Extremo a extremo y accesibilidad
+
+| Tarea | Resultado |
+| --- | --- |
+| Playwright E2E producción | 6/6 aprobadas (Chromium escritorio/móvil, WebKit Safari) |
+| axe accesibilidad | 0 violaciones en registro, menú y compras |
+| Lighthouse accesibilidad | 100/100 |
+| Lighthouse best-practices | 100/100 |
+| Lighthouse SEO | 91/100 (falta robots.txt) |
+| Rate limiting (30 req, 10 concurrentes) | Sin throttling detectado (401 sin JWT) |
+| PWA publicada | CloudFront `https://dlyqgj3qyk2p2.cloudfront.net` |
+
+Pendientes: robots.txt, prueba throttling con JWT reales, Lighthouse PWA instalable
+requiere HTTPS real con service worker activo, y verificación en dispositivos físicos.
+
 | HU o tarea | Contribución |
 | --- | --- |
 | HU-01 a HU-06 | Pantallas Cognito, SRP, verificación/reenvío, recuperación, sesión y cierre |
