@@ -110,6 +110,10 @@ El gate local de F6 queda aprobado con 117 pruebas, Ruff, mypy y SAM build.
 
 ## Etapa 7
 
+Documentación ampliada: [`FASE-7.md`](FASE-7.md). Incluye el inventario técnico,
+los cambios registrados el 13/10/2026, procedimientos de despliegue y publicación,
+evidencias disponibles, costos, operación y criterios pendientes para F8.
+
 | Tarea | Resultado |
 | --- | --- |
 | AWS `dev` | `brock-dev` está `CREATE_COMPLETE` en `us-east-1` |
@@ -128,3 +132,22 @@ actual es el scaffold de F1, no el producto completo.
 HU-14, HU-15 y HU-35 tienen soporte compartido y pruebas de validación, pero la
 integración de sus mensajes de generación continúa en F5. HU-01 a HU-06 tienen
 infraestructura Cognito de F2; las pantallas y flujos de frontend continúan en F8.
+
+## Etapa 8 — implementación local
+
+| HU o tarea | Contribución |
+| --- | --- |
+| HU-01 a HU-06 | Pantallas Cognito, SRP, verificación/reenvío, recuperación, sesión y cierre |
+| HU-07/08/09 | Baja de cuenta confirmada, perfil y preferencias |
+| HU-10 a HU-13/15/16 | Formulario, borrador, cupo, creación y consulta de generación |
+| HU-17 a HU-19 | Menú por día, detalle y aviso IA |
+| HU-20 a HU-23 | Lista por pasillo, marcas optimistas con reversión, progreso y compartir |
+| HU-24 a HU-27 | Historial paginado, reapertura, eliminación y reutilización de entrada |
+| HU-28 a HU-31 | PWA, iconos PNG, diseño adaptable, español y accesibilidad automatizada |
+| BASE | Proxy local, cliente JWT, caché aislada, code splitting y script de publicación |
+| QA | 22 pruebas Vitest y 6 Playwright aprobadas; axe sin violaciones en los escenarios verificados |
+
+La publicación fue completada el 15/10/2026 tras renovar la sesión SSO.
+Verificación real: login SRP, API con JWT (GET/PUT/POST/DELETE), y Bedrock
+invocado con inference profile. Pendientes: SNS, registro email real, Lighthouse.
+Bitácora ampliada en la nota `09 - FASE 8 - FRONTEND PWA.md` del vault Obsidian.

@@ -5,8 +5,14 @@ backend Python 3.12 e infraestructura serverless AWS con SAM.
 
 ## Estado
 
-Fases 1, 2, 3 y 4: base local, infraestructura, módulos compartidos y API
-implementados y verificados. La generación real con Bedrock sigue pendiente de F5.
+Fases 1–6 implementadas y verificadas localmente, con 117 pruebas de backend.
+Fase 7: entorno `dev` desplegado en AWS y frontend inicial publicado.
+Fase 8: frontend funcional implementado, verificado con JWT real y publicado
+en CloudFront. Bedrock invocado con inference profile; prompt tuning pendiente F9.
+La documentación detallada del despliegue está en [`docs/FASE-7.md`](docs/FASE-7.md).
+
+La bitácora detallada de ejecución F1–F8 se mantiene en el vault Obsidian:
+`C:\Users\xwesa\OneDrive\OBSIDEAN\CLAUD\AWS PRACTICA\PROYECTOS\BROCK\DE EJECUCION`.
 
 ## Convención de commits
 
@@ -83,13 +89,39 @@ npm.cmd run build
 npm.cmd test
 ```
 
-El backend tiene 58 pruebas de validación e integración con DynamoDB simulada
-mediante moto. El frontend todavía no tiene pruebas de negocio; Vitest permite
-su suite vacía. Las pruebas actuales no invocan AWS ni Bedrock reales.
+El gate backend F6 registra 117 pruebas con DynamoDB simulada mediante moto.
+El frontend tiene 22 pruebas Vitest y 6 escenarios ejecutados con Playwright
+en Chromium de escritorio, Chromium móvil y WebKit con perfil iPhone. Incluyen
+validación con axe en registro, menú y compras. Las pruebas automatizadas usan
+servicios simulados y no invocan Bedrock real.
 
-Playwright está configurado para escritorio, Android y Safari móvil. Cuando se
-incorporen las pruebas E2E, instalar sus navegadores con
-`npx.cmd playwright install` y ejecutar `npm.cmd run test:e2e`.
+Para Playwright, instalar navegadores con `npx.cmd playwright install chromium webkit`
+y ejecutar `npm.cmd run test:e2e`. En la ejecución de F8 se usaron navegadores
+temporales: `$env:PLAYWRIGHT_BROWSERS_PATH = 'C:\Users\xwesa\AppData\Local\Temp\opencode\brock-playwright'`.
+
+## Frontend funcional — Fase 8
+
+- Registro, verificación/reenvío, acceso SRP, recuperación y renovación de sesión.
+- Rutas privadas y limpieza de caché al salir; borrador por usuario en la pestaña
+  conservado ante vencimiento y eliminado al cerrar sesión explícitamente.
+- Perfil, preferencias, cupo, creación de planes, polling, menú por día y platos.
+- Lista por pasillo, marcado optimista con reversión, progreso y compartir/copiar.
+- Historial paginado, eliminación confirmada, reutilización de entrada y baja de cuenta.
+- Diseño adaptable, recursos en español, iconos PNG, instalación y actualización PWA.
+- En Vite local, `/api` usa proxy al backend para evitar ampliar CORS en AWS.
+- El service worker precachea assets públicos; no cachea respuestas privadas API.
+
+Publicar desde la raíz con sesión AWS vigente y `aws`/`npm.cmd` disponibles:
+
+```powershell
+.\scripts\publish-frontend.ps1 -Config config/aws/dev.env
+```
+
+El script exporta outputs, compila, publica assets con hash antes del HTML/PWA,
+conserva chunks anteriores e invalida CloudFront esperando su finalización.
+La sesión SSO encontrada en F8 estaba vencida; debe renovarse con AWS CLI v2
+(`aws sso login --profile Richard`) antes de publicar. No se registró un despliegue
+F8 ni una generación real en esta ejecución.
 
 ## Infraestructura — Fase 2
 
@@ -323,6 +355,11 @@ en las versiones iniciales. React se mantiene en 18, según la arquitectura.
 - No se usaron credenciales, Cognito real ni Bedrock real.
 
 ## Despliegue `dev` en AWS — Fase 7
+
+**Guía detallada:** [`docs/FASE-7.md`](docs/FASE-7.md), con arquitectura,
+inventario de recursos, configuración, cambios de F7, procedimiento reproducible,
+verificaciones registradas, costos, diagnóstico, eliminación y pendientes para F8.
+El estado siguiente corresponde al registro del despliegue del 13/10/2026.
 
 La pila `brock-dev` se desplegó en `us-east-1` y está `CREATE_COMPLETE`.
 
