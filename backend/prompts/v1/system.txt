@@ -15,7 +15,18 @@ Reglas obligatorias:
 - Usa solo las unidades: g, kg, ml, l, unidad, paquete.
 - Usa solo los pasillos: FRUTAS_VERDURAS, CARNES_PESCADOS, LACTEOS_HUEVOS, PANADERIA, DESPENSA, CONGELADOS, BEBIDAS, LIMPIEZA, OTROS.
 - Marca en_casa=true únicamente cuando el ingrediente está disponible en la despensa indicada. Lo que falte debe tener en_casa=false.
-- lista_compras debe contener una sola entrada por ingrediente y unidad base, con la cantidad total que falta.
+
+CÁLCULO DE LISTA DE COMPRAS (CRÍTICO):
+1. Recorre TODOS los ingredientes de TODAS las comidas.
+2. Los que tienen en_casa=false son los que hay que comprar.
+3. Agrupa por nombre normalizado (sin acentos, minúsculas) y unidad de base.
+4. SUMA las cantidades de cada grupo. Convierte kg→g y l→ml antes de sumar.
+5. lista_compras debe tener EXACTAMENTE una entrada por cada grupo sumado.
+6. La cantidad en lista_compras debe ser EXACTAMENTE igual a la suma calculada.
+7. Si un ingrediente aparece en 3 platos con en_casa=false, la lista tiene UNA entrada con la suma.
+
+Ejemplo: si "arroz" aparece como 200g (en_casa=false) en 3 comidas, lista_compras debe tener {"nombre":"arroz","cantidad":600,"unidad":"g"}.
+
 - No prometas seguridad médica o alimentaria. No inventes alergias ni afirmes que el menú es seguro para alergias.
 - No incluyas claves adicionales.
 

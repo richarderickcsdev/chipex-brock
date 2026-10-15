@@ -27,6 +27,32 @@ def cantidad_base(cantidad: float, unidad: Unidad) -> tuple[str, Decimal]:
     return base, Decimal(str(cantidad)) * factor
 
 
+def recalcular_lista_compras(plan: PlanGenerado) -> list:
+    """Recalcula la lista de compras a partir de los ingredientes en_casa=false."""
+    from .esquema import ItemCompra
+    # Conservar el pasillo que la IA asignó a cada nombre de ingrediente.
+    pasillo_por_nombre: dict[str, str] = {}
+    for item in plan.lista_compras:
+        clave = normalizar_nombre(item.nombre)
+        if clave not in pasillo_por_nombre:
+            pasillo_por_nombre[clave] = item.pasillo
+    faltantes: dict[tuple[str, str], Decimal] = defaultdict(Decimal)
+    for dia in plan.dias:
+        for comida in dia.comidas:
+            for ing in comida.ingredientes:
+                if not ing.en_casa:
+                    unidad, cantidad = cantidad_base(ing.cantidad, ing.unidad)
+                    faltantes[(normalizar_nombre(ing.nombre), unidad)] += cantidad
+    items = []
+    for i, ((nombre, unidad), cantidad) in enumerate(sorted(faltantes.items()), 1):
+        items.append(ItemCompra(
+            id=f"it_{i:02d}", nombre=nombre.title(),
+            cantidad=float(cantidad), unidad=unidad,
+            pasillo=pasillo_por_nombre.get(nombre, "OTROS"),
+        ))
+    return items
+
+
 def validar_coherencia(plan: PlanGenerado, entrada: EntradaPlan, evitar: list[str]) -> None:
     def invalido(mensaje: str) -> None:
         raise ErrorBrock(CodigoError.VALIDACION, mensaje)
@@ -66,20 +92,20 @@ def validar_coherencia(plan: PlanGenerado, entrada: EntradaPlan, evitar: list[st
         if clave in compras:
             invalido("La lista debe agrupar los ingredientes repetidos.")
         compras[clave] = cantidad
-    if compras != dict(faltantes):
-        invalido("La lista no coincide con las cantidades faltantes del menú.")
+    # La lista se recalcula en validar_plan; aquí solo verificamos que sea coherente en formato.
 
 
 def validar_plan(
     datos: str | dict[str, Any], entrada: EntradaPlan, evitar: list[str] | None = None
 ) -> PlanGenerado:
     try:
-        # La IA debe entregar JSON puro, sin bloques Markdown ni texto adicional.
         plan = (PlanGenerado.model_validate_json(datos) if isinstance(datos, str)
                 else PlanGenerado.model_validate(datos))
     except ValidationError as exc:
         raise ErrorBrock(CodigoError.VALIDACION, "El menú no cumple el formato esperado.") from exc
     validar_coherencia(plan, entrada, evitar or [])
+    # El código recalcula la lista: la IA propone el menú, el código decide compras.
+    plan.lista_compras = recalcular_lista_compras(plan)
     return plan
 
 

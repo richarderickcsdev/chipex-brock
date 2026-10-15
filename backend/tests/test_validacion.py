@@ -105,10 +105,10 @@ def test_cantidades_unidades_agrupadas(
     ingredientes.append({"nombre": "arvejas", "cantidad": 0.1, "unidad": "kg", "en_casa": False})
     respuesta_plan["lista_compras"][0]["cantidad"] = 0.2
     respuesta_plan["lista_compras"][0]["unidad"] = "kg"
-    validar_plan(respuesta_plan, entrada)
-    respuesta_plan["lista_compras"][0]["cantidad"] = 0.3
-    with pytest.raises(ErrorBrock, match="cantidades"):
-        validar_plan(respuesta_plan, entrada)
+    resultado = validar_plan(respuesta_plan, entrada)
+    # El código recalcula la lista: 100g + 0.1kg(=100g) = 200g en unidad base.
+    assert resultado.lista_compras[0].cantidad == 200.0
+    assert resultado.lista_compras[0].unidad == "g"
 
 
 def test_no_comprar_disponible_y_si_compra_parcial(
@@ -116,10 +116,13 @@ def test_no_comprar_disponible_y_si_compra_parcial(
 ) -> None:
     ingredientes = respuesta_plan["dias"][0]["comidas"][0]["ingredientes"]
     ingredientes.append({"nombre": "Arvejas", "cantidad": 50, "unidad": "g", "en_casa": True})
-    validar_plan(respuesta_plan, entrada)  # Compra solo los 100 g faltantes.
+    resultado = validar_plan(respuesta_plan, entrada)
+    # Con 50g en casa de 150g totales, compra solo 100g.
+    assert resultado.lista_compras[0].cantidad == 100
     ingredientes[1]["en_casa"] = True
-    with pytest.raises(ErrorBrock, match="cantidades"):
-        validar_plan(respuesta_plan, entrada)
+    resultado2 = validar_plan(respuesta_plan, entrada)
+    # Si todo está en casa, la lista está vacía.
+    assert len(resultado2.lista_compras) == 0
 
 
 def test_duplicados_id_y_nombre(entrada: EntradaPlan, respuesta_plan: dict[str, Any]) -> None:
