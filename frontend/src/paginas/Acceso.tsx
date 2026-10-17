@@ -270,7 +270,7 @@ export function Acceso({ modo }: { modo: Modo }) {
             {error}
           </p>
         )}
-        <button className="principal ancho" disabled={isSubmitting}>
+        <button className="principal" disabled={isSubmitting}>
           {isSubmitting ? t.esperando : titulo}
         </button>
       </form>

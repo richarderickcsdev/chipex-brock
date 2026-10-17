@@ -49,17 +49,27 @@ export function DetallePlan() {
       </div>
       {plan.estado === 'GENERANDO' && (
         <div className="tarjeta" role="status">
-          <h2>{t.generando}</h2>
-          <progress aria-label={t.generando} />
-          <p>{agotado ? t.esperaAgotada : t.progresoGeneracion}</p>
-          {agotado && (
-            <button
-              onClick={() => void consulta.refetch()}
-              disabled={consulta.isFetching}
-            >
-              {t.consultar}
-            </button>
-          )}
+          <div className="generando">
+            <img
+              src="/generando.gif"
+              alt=""
+              aria-hidden="true"
+              className="generando-gif"
+            />
+            <div>
+              <h2>{t.generando}</h2>
+              <progress aria-label={t.generando} />
+              <p>{agotado ? t.esperaAgotada : t.progresoGeneracion}</p>
+              {agotado && (
+                <button
+                  onClick={() => void consulta.refetch()}
+                  disabled={consulta.isFetching}
+                >
+                  {t.consultar}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
       {plan.estado === 'ERROR' && (

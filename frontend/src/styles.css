@@ -261,6 +261,12 @@ form {
   display: grid;
   gap: 12px;
 }
+form button {
+  justify-self: center;
+}
+form .enlace {
+  justify-self: center;
+}
 label,
 legend {
   font-weight: 600;
@@ -376,6 +382,7 @@ input[type='checkbox'] {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 .acciones {
   margin-top: 12px;
@@ -409,9 +416,28 @@ input[type='checkbox'] {
   border-radius: var(--radius-full);
   font-size: 14px;
 }
+.generando {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.generando-gif {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+}
+.generando > div {
+  flex: 1;
+  min-width: 200px;
+}
+.generando h2 {
+  margin: 0 0 12px;
+}
 .generar {
   margin-top: 16px;
-  width: 100%;
+  align-self: center;
   min-height: 56px;
   font-size: 17px;
 }
@@ -650,6 +676,13 @@ progress::-webkit-progress-value {
 /* PWA */
 .pwa {
   margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.pwa .mensaje {
+  align-self: stretch;
 }
 
 /* Skip link */
